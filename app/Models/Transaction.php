@@ -7,20 +7,26 @@ use Illuminate\Database\Eloquent\Model;
 class Transaction extends Model
 {
     protected $fillable = [
-        'user_id', 
-        'book_id', 
-        'tanggal_pinjam', 
-        'tanggal_kembali', 
-        'status'
+        'user_id',
+        'book_id',
+        'tanggal_pinjam',
+        'status',
     ];
 
-    public function user() 
-    { 
-        return $this->belongsTo(User::class); 
+    // Relasi ke User
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 
-    public function book() 
-    { 
-        return $this->belongsTo(Book::class); 
+    // Relasi ke Book
+    public function book()
+    {
+        return $this->belongsTo(Book::class);
+    }
+
+    public function denda()
+    {
+        return $this->hasOne(Denda::class, 'transaction_id');
     }
 }

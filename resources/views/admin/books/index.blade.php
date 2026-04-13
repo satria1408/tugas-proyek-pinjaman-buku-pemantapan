@@ -15,6 +15,45 @@
         </div>
     @endif
 
+
+    <form method="GET" action="{{ route('books.index') }}" class="mb-3">
+        <div class="row">
+
+            <div class="col-md-3">
+                <input type="text" name="search" class="form-control"
+                    placeholder="Cari judul buku..."
+                    value="{{ request('search') }}">
+            </div>
+
+            <div class="col-md-3">
+                <select name="kategori" class="form-control">
+                    <option value="">-- Semua Kategori --</option>
+
+                    @foreach($categories as $cat)
+                        <option value="{{ $cat }}"
+                            {{ request('kategori') == $cat ? 'selected' : '' }}>
+                            {{ $cat }}
+                        </option>
+                    @endforeach
+
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <button class="btn btn-primary w-100">
+                    Filter
+                </button>
+            </div>
+
+            <div class="col-md-2">
+                <a href="{{ route('books.index') }}" class="btn btn-secondary w-100">
+                    Reset
+                </a>
+            </div>
+
+        </div>
+    </form>
+
     <div class="card shadow-sm">
         <div class="card-body p-0">
             <table class="table table-hover table-striped mb-0">
@@ -33,7 +72,11 @@
                         <td class="text-center">{{ $loop->iteration }}</td>
                         <td>{{ $book->judul }}</td>
                         <td>{{ $book->penulis }}</td>
-                        <td><span class="badge bg-info text-dark">{{ $book->stok }}</span></td>
+                        <td>
+                            <span class="badge bg-info text-dark">
+                                {{ $book->stok }}
+                            </span>
+                        </td>
                         <td class="text-center">
                             <a href="{{ route('books.edit', $book->id) }}" class="btn btn-warning btn-sm">
                                 <i class="fas fa-edit"></i> Edit

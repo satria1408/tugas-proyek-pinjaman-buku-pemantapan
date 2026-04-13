@@ -18,7 +18,7 @@ class DatabaseSeeder extends Seeder
     {
         // 1. buat akun admin
         User::create([
-            'username' => 'admin',
+            'username' => 'iyusadmin',
             'password' => Hash::make('123456'),
             'nama_lengkap' => 'Administrator Utama',
             'alamat' => 'ruang perpustakaan', // Samakan jadi kecil semua
@@ -84,12 +84,11 @@ class DatabaseSeeder extends Seeder
             'status' => 'kembali',
         ]);
 
-        
         Transaction::create([
             'user_id' => $siswa1->id,
             'book_id' => $buku1->id,
             'tanggal_pinjam' => '2026-04-01',
-            'tanggal_kembali' => '2026-04-08', 
+            'tanggal_kembali' => '2026-04-08',
             'status' => 'pinjam',
         ]);
 

@@ -7,10 +7,26 @@ use Illuminate\Http\Request;
 
 class BookController extends Controller
 {
-    public function index() 
+    public function index(Request $request) 
     {
-        $books = Book::all();
-        return view('admin.books.index', compact('books'));
+        $query = Book::query();
+
+        
+        if ($request->kategori) {
+            $query->where('kategori', $request->kategori);
+        }
+
+        
+        if ($request->search) {
+            $query->where('judul', 'like', '%' . $request->search . '%');
+        }
+
+        $books = $query->get();
+
+    
+        $categories = Book::select('kategori')->distinct()->pluck('kategori');
+
+        return view('admin.books.index', compact('books', 'categories'));
     }
 
     public function create() 
@@ -24,6 +40,7 @@ class BookController extends Controller
             'judul' => 'required',
             'penulis' => 'required',
             'penerbit' => 'required',
+            'kategori' => 'required',
             'stok' => 'required|integer'
         ]);
 
@@ -43,6 +60,7 @@ class BookController extends Controller
             'judul' => 'required',
             'penulis' => 'required',
             'penerbit' => 'required',
+            'kategori' => 'required',
             'stok' => 'required|integer'
         ]);
 

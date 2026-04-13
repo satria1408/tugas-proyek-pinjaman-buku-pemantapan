@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Book;
 use App\Models\Transaction;
+use App\Models\Denda;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\RedirectResponse;
@@ -16,11 +17,9 @@ class SiswaController extends Controller
      */
     public function index(): View
     {
-        // Fitur List Buku
         $books = Book::all();
 
-        // List buku yang sedang dipinjam user (Eager Loading 'book' agar efisien)
-        $myBooks = Transaction::with('book')
+        $myBooks = Transaction::with('book', 'denda')
             ->where('user_id', Auth::id())
             ->where('status', 'pinjam')
             ->get();
@@ -29,13 +28,13 @@ class SiswaController extends Controller
     }
 
     /**
-     * Logika untuk meminjam buku.
+     * Pinjam buku
      */
     public function pinjamBuku($book_id): RedirectResponse
     {
         $book = Book::findOrFail($book_id);
 
-        // Validasi: Cek apakah user sudah meminjam buku yang sama dan belum dikembalikan
+        // Cek sudah pinjam atau belum
         $alreadyBorrowed = Transaction::where('user_id', Auth::id())
             ->where('book_id', $book_id)
             ->where('status', 'pinjam')
@@ -45,7 +44,6 @@ class SiswaController extends Controller
             return back()->with('error', 'Anda masih meminjam buku ini!');
         }
 
-        // Cek stok buku
         if ($book->stok > 0) {
             Transaction::create([
                 'user_id' => Auth::id(),
@@ -63,24 +61,50 @@ class SiswaController extends Controller
     }
 
     /**
-     * Logika untuk mengembalikan buku.
+     * Kembalikan buku + HITUNG DENDA
      */
     public function kembalikanBuku($transaction_id): RedirectResponse
     {
-        // Validasi transaksi milik user dan statusnya memang sedang dipinjam
-        $transaksi = Transaction::where('id', $transaction_id)
+        $transaction = Transaction::with('book', 'denda')
+            ->where('id', $transaction_id)
             ->where('user_id', Auth::id())
             ->where('status', 'pinjam')
             ->firstOrFail();
 
-        $transaksi->update([
-            'tanggal_kembali' => Carbon::now(),
+        $tglPinjam = Carbon::parse($transaction->tanggal_pinjam);
+        $batas = $tglPinjam->copy()->addDays(7); // batas 7 hari
+        $today = Carbon::now();
+
+        $hariTelat = 0;
+        $jumlahDenda = 0;
+
+        if ($today->gt($batas)) {
+            $hariTelat = $batas->diffInDays($today);
+            $jumlahDenda = $hariTelat * 1000;
+
+            if (!$transaction->denda) {
+                Denda::create([
+                    'transaksi_id' => $transaction->id,
+                    'jumlah_denda' => $jumlahDenda,
+                    'hari_telat' => $hariTelat
+                ]);
+            }
+        }
+
+        // update transaksi
+        $transaction->update([
+            'tanggal_kembali' => $today,
             'status' => 'kembali'
         ]);
 
-        // Kembalikan stok buku melalui relasi
-        $transaksi->book->increment('stok');
+        // kembalikan stok
+        $transaction->book->increment('stok');
 
-        return back()->with('success', 'Buku berhasil dikembalikan');
+        return back()->with(
+            'success',
+            $jumlahDenda > 0
+                ? 'Buku dikembalikan. Denda: Rp ' . number_format($jumlahDenda)
+                : 'Buku dikembalikan tanpa denda'
+        );
     }
 }
