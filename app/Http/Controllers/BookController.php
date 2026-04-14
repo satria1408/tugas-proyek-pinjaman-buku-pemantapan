@@ -11,27 +11,41 @@ class BookController extends Controller
     {
         $query = Book::query();
 
-        
-        if ($request->kategori) {
+        // 🔍 FILTER KATEGORI
+        if ($request->filled('kategori')) {
             $query->where('kategori', $request->kategori);
         }
 
-        
-        if ($request->search) {
+        // 🔎 SEARCH
+        if ($request->filled('search')) {
             $query->where('judul', 'like', '%' . $request->search . '%');
         }
 
         $books = $query->get();
 
-    
-        $categories = Book::select('kategori')->distinct()->pluck('kategori');
+        // ✅ kategori untuk dropdown
+        $categories = Book::select('kategori')
+            ->distinct()
+            ->orderBy('kategori')
+            ->pluck('kategori');
+
+        // ✅ TAMBAHAN: data peminjaman siswa
+        $myBooks = \App\Models\Transaksi::with('book')
+            ->where('user_id', auth()->id())
+            ->get();
+
+        // ✅ DETEKSI HALAMAN (admin / siswa)
+        if ($request->is('siswa*')) {
+            return view('siswa.dashboard', compact('books', 'categories', 'myBooks'));
+        }
 
         return view('admin.books.index', compact('books', 'categories'));
     }
 
     public function create() 
     {
-        return view('admin.books.create');
+        $categories = Book::select('kategori')->distinct()->pluck('kategori');
+        return view('admin.books.create', compact('categories'));
     }
 
     public function store(Request $request) 
@@ -44,14 +58,24 @@ class BookController extends Controller
             'stok' => 'required|integer'
         ]);
 
-        Book::create($request->all());
-        return redirect()->route('books.index')->with('success', 'Buku berhasil ditambahkan');
+        Book::create($request->only([
+            'judul',
+            'penulis',
+            'penerbit',
+            'kategori',
+            'stok'
+        ]));
+
+        return redirect()->route('books.index')
+            ->with('success', 'Buku berhasil ditambahkan');
     }
 
     public function edit($id) 
     {
         $book = Book::findOrFail($id);
-        return view('admin.books.edit', compact('book'));
+        $categories = Book::select('kategori')->distinct()->pluck('kategori');
+
+        return view('admin.books.edit', compact('book', 'categories'));
     }
 
     public function update(Request $request, $id) 
@@ -65,13 +89,24 @@ class BookController extends Controller
         ]);
 
         $book = Book::findOrFail($id);
-        $book->update($request->all());
-        return redirect()->route('books.index')->with('success', 'Buku berhasil diperbarui');
+
+        $book->update($request->only([
+            'judul',
+            'penulis',
+            'penerbit',
+            'kategori',
+            'stok'
+        ]));
+
+        return redirect()->route('books.index')
+            ->with('success', 'Buku berhasil diperbarui');
     }
 
     public function destroy($id) 
     {
         Book::findOrFail($id)->delete();
-        return redirect()->route('books.index')->with('success', 'Buku berhasil dihapus');
+
+        return redirect()->route('books.index')
+            ->with('success', 'Buku berhasil dihapus');
     }
 }

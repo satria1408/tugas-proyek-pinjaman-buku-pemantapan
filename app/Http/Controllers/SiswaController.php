@@ -9,32 +9,50 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
+use Illuminate\Http\Request;
 
 class SiswaController extends Controller
 {
-    /**
-     * Menampilkan daftar buku dan buku yang sedang dipinjam user.
-     */
-    public function index(): View
+    public function index(Request $request): View
     {
-        $books = Book::all();
+        $query = Book::query();
 
+        // FILTER KATEGORI
+        if ($request->filled('kategori')) {
+            $query->where('kategori', $request->kategori);
+        }
+
+        // SEARCH
+        if ($request->filled('search')) {
+            $query->where('judul', 'like', '%' . $request->search . '%');
+        }
+
+        // ✅ BEDAKAN DASHBOARD & HALAMAN SEMUA BUKU
+        if ($request->is('siswa/dashboard')) {
+            $books = $query->limit(5)->get(); // hanya 5 buku
+        } else {
+            $books = $query->get(); // semua buku
+        }
+
+        // kategori dropdown
+        $categories = Book::select('kategori')
+            ->distinct()
+            ->orderBy('kategori')
+            ->pluck('kategori');
+
+        // data buku yang sedang dipinjam
         $myBooks = Transaction::with('book', 'denda')
             ->where('user_id', Auth::id())
             ->where('status', 'pinjam')
             ->get();
 
-        return view('siswa.dashboard', compact('books', 'myBooks'));
+        return view('siswa.dashboard', compact('books', 'categories', 'myBooks'));
     }
 
-    /**
-     * Pinjam buku
-     */
     public function pinjamBuku($book_id): RedirectResponse
     {
         $book = Book::findOrFail($book_id);
 
-        // Cek sudah pinjam atau belum
         $alreadyBorrowed = Transaction::where('user_id', Auth::id())
             ->where('book_id', $book_id)
             ->where('status', 'pinjam')
@@ -60,9 +78,6 @@ class SiswaController extends Controller
         return back()->with('error', 'Stok buku habis!');
     }
 
-    /**
-     * Kembalikan buku + HITUNG DENDA
-     */
     public function kembalikanBuku($transaction_id): RedirectResponse
     {
         $transaction = Transaction::with('book', 'denda')
@@ -72,7 +87,7 @@ class SiswaController extends Controller
             ->firstOrFail();
 
         $tglPinjam = Carbon::parse($transaction->tanggal_pinjam);
-        $batas = $tglPinjam->copy()->addDays(7); // batas 7 hari
+        $batas = $tglPinjam->copy()->addDays(7);
         $today = Carbon::now();
 
         $hariTelat = 0;
@@ -91,13 +106,11 @@ class SiswaController extends Controller
             }
         }
 
-        // update transaksi
         $transaction->update([
             'tanggal_kembali' => $today,
             'status' => 'kembali'
         ]);
 
-        // kembalikan stok
         $transaction->book->increment('stok');
 
         return back()->with(
