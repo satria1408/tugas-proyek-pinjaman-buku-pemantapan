@@ -23,21 +23,11 @@ class BookController extends Controller
 
         $books = $query->get();
 
-        // ✅ kategori untuk dropdown
+        // ambil kategori unik untuk dropdown
         $categories = Book::select('kategori')
             ->distinct()
             ->orderBy('kategori')
             ->pluck('kategori');
-
-        // ✅ TAMBAHAN: data peminjaman siswa
-        $myBooks = \App\Models\Transaksi::with('book')
-            ->where('user_id', auth()->id())
-            ->get();
-
-        // ✅ DETEKSI HALAMAN (admin / siswa)
-        if ($request->is('siswa*')) {
-            return view('siswa.dashboard', compact('books', 'categories', 'myBooks'));
-        }
 
         return view('admin.books.index', compact('books', 'categories'));
     }
@@ -105,6 +95,7 @@ class BookController extends Controller
     public function destroy($id) 
     {
         Book::findOrFail($id)->delete();
+        
 
         return redirect()->route('books.index')
             ->with('success', 'Buku berhasil dihapus');
