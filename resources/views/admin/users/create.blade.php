@@ -32,13 +32,21 @@
                             <textarea name="alamat" id="alamat" class="form-control" rows="3" placeholder="Masukkan alamat lengkap"></textarea>
                         </div>
 
+                        
+                        <div class="mb-3">
+                            <label for="role" class="form-control-label font-weight-bold">Role</label>
+                            <select name="role" id="role" class="form-control" required>
+                                <option value="siswa">Siswa</option>
+                            </select>
+                        </div>
+
                         <div class="d-flex justify-content-between border-top pt-3">
                             <a href="{{ route('users.index') }}" class="btn btn-secondary shadow-sm">
                                 <i class="fas fa-arrow-left"></i> Kembali
                             </a>
                             <button type="submit" class="btn btn-success shadow-sm">
                                 <i class="fas fa-save"></i> Simpan
-                            </a>
+                            </button>
                         </div>
                     </form>
                 </div>

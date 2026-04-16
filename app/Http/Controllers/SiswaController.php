@@ -2,122 +2,104 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Book;
-use App\Models\Transaction;
-use App\Models\Denda;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Http\RedirectResponse;
-use Illuminate\View\View;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 
-class SiswaController extends Controller
+class UserController extends Controller
 {
-    public function index(Request $request): View
+    /**
+     * Menampilkan daftar anggota (HANYA SISWA)
+     */
+    public function index()
     {
-        $query = Book::query();
+        $users = User::where('role', 'siswa')->get();
 
-        // FILTER KATEGORI
-        if ($request->filled('kategori')) {
-            $query->where('kategori', $request->kategori);
-        }
-
-        // SEARCH
-        if ($request->filled('search')) {
-            $query->where('judul', 'like', '%' . $request->search . '%');
-        }
-
-        // ✅ BEDAKAN DASHBOARD & HALAMAN SEMUA BUKU
-        if ($request->is('siswa/dashboard')) {
-            $books = $query->limit(5)->get(); // hanya 5 buku
-        } else {
-            $books = $query->get(); // semua buku
-        }
-
-        // kategori dropdown
-        $categories = Book::select('kategori')
-            ->distinct()
-            ->orderBy('kategori')
-            ->pluck('kategori');
-
-        // data buku yang sedang dipinjam
-        $myBooks = Transaction::with('book', 'denda')
-            ->where('user_id', Auth::id())
-            ->where('status', 'pinjam')
-            ->get();
-
-        return view('siswa.dashboard', compact('books', 'categories', 'myBooks'));
+        return view('admin.users.index', compact('users'));
     }
 
-    public function pinjamBuku($book_id): RedirectResponse
+    /**
+     * Form tambah anggota
+     */
+    public function create()
     {
-        $book = Book::findOrFail($book_id);
-
-        $alreadyBorrowed = Transaction::where('user_id', Auth::id())
-            ->where('book_id', $book_id)
-            ->where('status', 'pinjam')
-            ->exists();
-
-        if ($alreadyBorrowed) {
-            return back()->with('error', 'Anda masih meminjam buku ini!');
-        }
-
-        if ($book->stok > 0) {
-            Transaction::create([
-                'user_id' => Auth::id(),
-                'book_id' => $book_id,
-                'tanggal_pinjam' => Carbon::now(),
-                'status' => 'pinjam'
-            ]);
-
-            $book->decrement('stok');
-
-            return back()->with('success', 'Buku berhasil dipinjam');
-        }
-
-        return back()->with('error', 'Stok buku habis!');
+        return view('admin.users.create');
     }
 
-    public function kembalikanBuku($transaction_id): RedirectResponse
+    /**
+     * Simpan anggota baru (DEFAULT SISWA)
+     */
+    public function store(Request $request)
     {
-        $transaction = Transaction::with('book', 'denda')
-            ->where('id', $transaction_id)
-            ->where('user_id', Auth::id())
-            ->where('status', 'pinjam')
-            ->firstOrFail();
-
-        $tglPinjam = Carbon::parse($transaction->tanggal_pinjam);
-        $batas = $tglPinjam->copy()->addDays(7);
-        $today = Carbon::now();
-
-        $hariTelat = 0;
-        $jumlahDenda = 0;
-
-        if ($today->gt($batas)) {
-            $hariTelat = $batas->diffInDays($today);
-            $jumlahDenda = $hariTelat * 1000;
-
-            if (!$transaction->denda) {
-                Denda::create([
-                    'transaksi_id' => $transaction->id,
-                    'jumlah_denda' => $jumlahDenda,
-                    'hari_telat' => $hariTelat
-                ]);
-            }
-        }
-
-        $transaction->update([
-            'tanggal_kembali' => $today,
-            'status' => 'kembali'
+        $request->validate([
+            'nama_lengkap' => 'required',
+            'username' => 'required|unique:users,username',
+            'password' => 'required|min:6',
+            'alamat' => 'nullable',
         ]);
 
-        $transaction->book->increment('stok');
+        User::create([
+            'nama_lengkap' => $request->nama_lengkap,
+            'username' => $request->username,
+            'password' => Hash::make($request->password),
+            'alamat' => $request->alamat,
+            'role' => 'siswa', // 🔥 selalu siswa
+        ]);
 
-        return back()->with(
-            'success',
-            $jumlahDenda > 0
-                ? 'Buku dikembalikan. Denda: Rp ' . number_format($jumlahDenda)
-                : 'Buku dikembalikan tanpa denda'
-        );
+        return redirect()->route('users.index')
+            ->with('success', 'Anggota berhasil ditambahkan');
+    }
+
+    /**
+     * Form edit anggota
+     */
+    public function edit(string $id)
+    {
+        $user = User::where('role', 'siswa')->findOrFail($id);
+
+        return view('admin.users.edit', compact('user'));
+    }
+
+    /**
+     * Update anggota (TIDAK BISA UBAH ROLE)
+     */
+    public function update(Request $request, string $id)
+    {
+        $user = User::where('role', 'siswa')->findOrFail($id);
+
+        $request->validate([
+            'nama_lengkap' => 'required',
+            'username' => 'required|unique:users,username,'.$user->id,
+            'alamat' => 'nullable',
+            'password' => 'nullable|min:6',
+        ]);
+
+        $data = [
+            'nama_lengkap' => $request->nama_lengkap,
+            'username' => $request->username,
+            'alamat' => $request->alamat,
+        ];
+
+        if ($request->filled('password')) {
+            $data['password'] = Hash::make($request->password);
+        }
+
+        $user->update($data);
+
+        return redirect()->route('users.index')
+            ->with('success', 'Data anggota diperbarui');
+    }
+
+    /**
+     * Hapus anggota
+     */
+    public function destroy(string $id)
+    {
+        $user = User::where('role', 'siswa')->findOrFail($id);
+
+        $user->delete();
+
+        return redirect()->route('users.index')
+            ->with('success', 'Anggota berhasil dihapus');
     }
 }

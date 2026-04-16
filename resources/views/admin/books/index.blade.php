@@ -15,10 +15,9 @@
         </div>
     @endif
 
-
+    <!-- FILTER -->
     <form method="GET" action="{{ route('books.index') }}" class="mb-3">
         <div class="row">
-
             <div class="col-md-3">
                 <input type="text" name="search" class="form-control"
                     placeholder="Cari judul buku..."
@@ -35,57 +34,84 @@
                             {{ $cat }}
                         </option>
                     @endforeach
-
                 </select>
             </div>
 
             <div class="col-md-2">
-                <button class="btn btn-primary w-100">
-                    Filter
-                </button>
+                <button class="btn btn-primary w-100">Filter</button>
             </div>
 
             <div class="col-md-2">
-                <a href="{{ route('books.index') }}" class="btn btn-secondary w-100">
-                    Reset
-                </a>
+                <a href="{{ route('books.index') }}" class="btn btn-secondary w-100">Reset</a>
             </div>
-
         </div>
     </form>
 
+    <!-- TABEL -->
     <div class="card shadow-sm">
         <div class="card-body p-0">
             <table class="table table-hover table-striped mb-0">
                 <thead class="table-dark">
                     <tr>
                         <th width="50" class="text-center">No</th>
+                        <th width="100">Cover</th> <!-- TAMBAHAN -->
                         <th>Judul</th>
                         <th>Penulis</th>
+                        <th>Penerbit</th>
+                        <th>Kategori</th>
                         <th width="100">Stok</th>
                         <th width="180" class="text-center">Aksi</th>
                     </tr>
                 </thead>
+
                 <tbody>
                     @forelse($books as $book)
                     <tr>
                         <td class="text-center">{{ $loop->iteration }}</td>
+
+                        <!-- COVER GAMBAR -->
+                        <td>
+                            @if($book->cover)
+                                <img src="{{ asset('storage/' . $book->cover) }}"
+                                     width="60"
+                                     height="80"
+                                     style="object-fit: cover; border-radius: 5px;">
+                            @else
+                                <span class="text-muted">No Image</span>
+                            @endif
+                        </td>
+
                         <td>{{ $book->judul }}</td>
                         <td>{{ $book->penulis }}</td>
+
+                        <td>
+                            <span class="badge bg-dark">
+                                {{ $book->penerbit }}
+                            </span>
+                        </td>
+
+                        <td>
+                            <span class="badge bg-secondary">
+                                {{ $book->kategori }}
+                            </span>
+                        </td>
+
                         <td>
                             <span class="badge bg-info text-dark">
                                 {{ $book->stok }}
                             </span>
                         </td>
+
                         <td class="text-center">
                             <a href="{{ route('books.edit', $book->id) }}" class="btn btn-warning btn-sm">
                                 <i class="fas fa-edit"></i> Edit
                             </a>
-                            
+
                             <form action="{{ route('books.destroy', $book->id) }}" method="POST" class="d-inline">
                                 @csrf 
                                 @method('DELETE')
-                                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Yakin ingin menghapus buku ini?')">
+                                <button type="submit" class="btn btn-danger btn-sm"
+                                    onclick="return confirm('Yakin ingin menghapus buku ini?')">
                                     <i class="fas fa-trash"></i> Hapus
                                 </button>
                             </form>
@@ -93,12 +119,13 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="5" class="text-center py-4 text-muted">
+                        <td colspan="8" class="text-center py-4 text-muted">
                             <em>Belum ada data buku yang tersedia.</em>
                         </td>
                     </tr>
                     @endforelse
                 </tbody>
+
             </table>
         </div>
     </div>

@@ -9,11 +9,11 @@ use Illuminate\Support\Facades\Hash;
 class UserController extends Controller
 {
     /**
-     * Menampilkan daftar anggota (Hanya role 'siswa')
+     * Menampilkan daftar anggota (bisa semua role)
      */
     public function index()
     {
-        $users = User::where('role', 'siswa')->get();
+        $users = User::all(); // 🔥 sekarang tampil semua (admin + siswa)
 
         return view('admin.users.index', compact('users'));
     }
@@ -36,6 +36,7 @@ class UserController extends Controller
             'username' => 'required|unique:users,username',
             'password' => 'required|min:6',
             'alamat' => 'nullable',
+            'role' => 'required|in:admin,siswa', // ✅ validasi role
         ]);
 
         User::create([
@@ -43,7 +44,7 @@ class UserController extends Controller
             'username' => $request->username,
             'password' => Hash::make($request->password),
             'alamat' => $request->alamat,
-            'role' => 'siswa', // Default role anggota
+            'role' => $request->role, // ✅ ambil dari form
         ]);
 
         return redirect()->route('users.index')->with('success', 'Anggota berhasil ditambahkan');
@@ -70,16 +71,18 @@ class UserController extends Controller
             'nama_lengkap' => 'required',
             'username' => 'required|unique:users,username,'.$user->id,
             'alamat' => 'nullable',
-            'password' => 'nullable|min:6', // Validasi jika password diisi
+            'password' => 'nullable|min:6',
+            'role' => 'required|in:admin,siswa', // ✅ validasi role
         ]);
 
         $data = [
             'nama_lengkap' => $request->nama_lengkap,
             'username' => $request->username,
             'alamat' => $request->alamat,
+            'role' => $request->role, // ✅ update role
         ];
 
-        // Update password hanya jika diisi oleh admin
+        // Update password hanya jika diisi
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
         }
@@ -95,6 +98,12 @@ class UserController extends Controller
     public function destroy(string $id)
     {
         $user = User::findOrFail($id);
+
+        // 🔒 opsional: jangan hapus admin
+        if ($user->role == 'admin') {
+            return redirect()->back()->with('error', 'Admin tidak boleh dihapus!');
+        }
+
         $user->delete();
 
         return redirect()->route('users.index')->with('success', 'Anggota berhasil dihapus');

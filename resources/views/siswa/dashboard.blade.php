@@ -3,7 +3,7 @@
 @section('content')
 <style>
     body {
-        background: #36d4a5;
+        background: #245db3;
     }
 
     .card {
@@ -43,7 +43,7 @@
     }
 
     .table-hover tbody tr:hover {
-        background-color: #4b629c;
+        background-color: #4b72d4;
         transition: 0.2s;
     }
 </style>
@@ -72,7 +72,6 @@
 
         <div class="card-body">
 
-            {{-- ✅ TAMBAHAN FILTER + SEARCH --}}
             <form method="GET" class="row mb-3">
                 <div class="col-md-4">
                     <select name="kategori" class="form-control">
@@ -88,7 +87,7 @@
 
                 <div class="col-md-4">
                     <input type="text" name="search" class="form-control"
-                        placeholder=" Cari judul buku..."
+                        placeholder="🔍 Cari judul buku..."
                         value="{{ request('search') }}">
                 </div>
 
@@ -102,7 +101,7 @@
                 <thead class="table-light">
                     <tr>
                         <th>Judul Buku</th>
-                        <th>Kategori</th> 
+                        <th>Kategori</th>
                         <th class="text-center">Stok</th>
                         <th class="text-center">Aksi</th>
                     </tr>
@@ -113,7 +112,6 @@
                     <tr>
                         <td class="fw-semibold">{{ $book->judul }}</td>
 
-                        {{-- FITUR KATEGORI --}}
                         <td>
                             <span class="badge bg-secondary">
                                 {{ $book->kategori }}
@@ -146,10 +144,9 @@
         </div>
     </div>
 
-
     <div class="card shadow-sm">
         <div class="card-header bg-success text-white">
-        
+             Buku yang Dipinjam
         </div>
 
         <div class="card-body">
@@ -210,13 +207,27 @@
                                 @endif
                             </td>
 
-                            <td>
-                                <form action="/siswa/kembali/{{ $trans->id }}" method="POST">
+                            <!--  AKSI: KEMBALIKAN + DELETE -->
+                            <td class="d-flex justify-content-center gap-2">
+
+                                <!-- KEMBALIKAN -->
+                                <form action="{{ route('siswa.kembali', $trans->id) }}" method="POST">
                                     @csrf
                                     <button class="btn btn-sm btn-warning px-3 text-white">
                                         Kembalikan
                                     </button>
                                 </form>
+
+                                <!-- DELETE -->
+                                <form action="{{ route('siswa.destroy', $trans->id) }}" method="POST"
+                                      onsubmit="return confirm('Yakin hapus? Ini untuk salah pinjam!')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button class="btn btn-sm btn-danger px-3">
+                                        Delete
+                                    </button>
+                                </form>
+
                             </td>
 
                         </tr>

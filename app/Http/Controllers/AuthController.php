@@ -9,17 +9,12 @@ use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
-    /**
-     * Menampilkan form login
-     */
+    
     public function showLogin()
     {
         return view('auth.login');
     }
 
-    /**
-     * Proses Login (Sesuai Flowchart: Validasi Login)
-     */
     public function login(Request $request)
     {
         $credentials = $request->validate([
@@ -30,9 +25,12 @@ class AuthController extends Controller
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
 
-            // Redirect sesuai Role (Flowchart Admin vs Siswa)
+            // ❌ Jika admin login di sini → tolak
             if (Auth::user()->role === 'admin') {
-                return redirect()->intended('/admin/dashboard');
+                Auth::logout();
+                return back()->withErrors([
+                    'username' => 'Silakan login melalui halaman admin!'
+                ]);
             }
 
             return redirect()->intended('/siswa/dashboard');
@@ -44,16 +42,47 @@ class AuthController extends Controller
     }
 
     /**
-     * Menampilkan form daftar (Sesuai Flowchart: Daftar Anggota)
+     * ================= LOGIN ADMIN =================
+     */
+    public function showAdminLogin()
+    {
+        return view('auth.login');
+    }
+
+    public function loginAdmin(Request $request)
+    {
+        $credentials = $request->validate([
+            'username' => 'required',
+            'password' => 'required'
+        ]);
+
+        if (Auth::attempt($credentials)) {
+            $request->session()->regenerate();
+
+            // ❌ Jika bukan admin → tolak
+            if (Auth::user()->role !== 'admin') {
+                Auth::logout();
+                return back()->withErrors([
+                    'username' => 'Akun ini bukan admin!'
+                ]);
+            }
+
+            return redirect()->intended('/admin/dashboard');
+        }
+
+        return back()->withErrors([
+            'username' => 'Username atau password salah!',
+        ]);
+    }
+
+    /**
+     * ================= REGISTER =================
      */
     public function showRegister()
     {
         return view('auth.register');
     }
 
-    /**
-     * Proses Registrasi Anggota Baru
-     */
     public function register(Request $request)
     {
         $request->validate([
@@ -66,15 +95,12 @@ class AuthController extends Controller
             'username'     => $request->username,
             'password'     => Hash::make($request->password),
             'nama_lengkap' => $request->nama_lengkap,
-            'role'         => 'siswa' // Default role saat mendaftar
+            'role'         => 'siswa' // default user
         ]);
 
         return redirect('/login')->with('success', 'Berhasil daftar, silakan login!');
     }
 
-    /**
-     * Proses Logout
-     */
     public function logout(Request $request)
     {
         Auth::logout();

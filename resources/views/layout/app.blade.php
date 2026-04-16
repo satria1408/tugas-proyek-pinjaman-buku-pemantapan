@@ -8,11 +8,9 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <style>
-        /* 🔥 NAVBAR GLASS */
         .navbar-glass {
-            background: rgba(255, 255, 255, 0.1) !important;
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255,255,255,0.2);
+            background: linear-gradient(135deg, #4e73df, #224abe) !important;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
 
         /* TEXT NAVBAR */
@@ -22,13 +20,15 @@
             color: #fff !important;
         }
 
+        /* ACTIVE MENU */
         .navbar-glass .nav-link.active {
             font-weight: bold;
             border-bottom: 2px solid #fff;
         }
 
+        /* HOVER */
         .navbar-glass .nav-link:hover {
-            color: #ddd !important;
+            color: #dcdcdc !important;
         }
 
         /* BADGE ROLE */
@@ -37,7 +37,6 @@
             color: #fff;
         }
 
-        /* OPTIONAL: biar tidak ketabrak navbar */
         body {
             min-height: 100vh;
         }

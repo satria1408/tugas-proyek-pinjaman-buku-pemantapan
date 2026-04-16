@@ -8,18 +8,27 @@ use Illuminate\Support\Facades\Auth;
 
 class CheckRole
 {
-    /**
-     * Handle an incoming request.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure  $next
-     * @param  string  $role
-     * @return mixed
-     */
-    public function handle(Request $request, Closure $next, $role)
+    public function handle(Request $request, Closure $next, ...$roles)
     {
-        // Jika user belum login atau role user tidak sesuai dengan parameter
-        if (!Auth::check() || Auth::user()->role !== $role) {
+        // ❌ Jika belum login
+        if (!Auth::check()) {
+            return redirect()->route('login');
+        }
+
+        $user = Auth::user();
+
+        //  Jika role tidak sesuai
+        if (!in_array($user->role, $roles)) {
+
+            //  Redirect sesuai role (biar UX bagus, bukan langsung 403)
+            if ($user->role === 'admin') {
+                return redirect('/admin/dashboard');
+            }
+
+            if ($user->role === 'siswa') {
+                return redirect('/siswa/dashboard');
+            }
+
             abort(403, 'Akses Ditolak: Anda tidak memiliki wewenang.');
         }
 

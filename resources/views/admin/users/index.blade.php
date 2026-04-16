@@ -16,6 +16,7 @@
                         <th>Nama Lengkap</th>
                         <th>Username</th>
                         <th>Alamat</th>
+                        <th>Role</th> <!--  TAMBAHAN -->
                         <th width="200">Aksi</th>
                     </tr>
                 </thead>
@@ -24,21 +25,42 @@
                         <tr>
                             <td class="text-center">{{ $loop->iteration }}</td>
                             <td>{{ $user->nama_lengkap }}</td>
-                            <td><span class="badge bg-light text-dark border">{{ $user->username }}</span></td>
+                            <td>
+                                <span class="badge bg-light text-dark border">
+                                    {{ $user->username }}
+                                </span>
+                            </td>
                             <td>{{ $user->alamat ?? '-' }}</td>
+
+                            
                             <td class="text-center">
-                                <a href="{{ route('users.edit', $user->id) }}" class="btn btn-warning btn-sm">Edit</a>
+                                @if($user->role == 'admin')
+                                    <span class="badge bg-danger">Admin</span>
+                                @else
+                                    <span class="badge bg-success">Siswa</span>
+                                @endif
+                            </td>
+
+                            <td class="text-center">
+                                <a href="{{ route('users.edit', $user->id) }}" class="btn btn-warning btn-sm">
+                                    Edit
+                                </a>
                                 
                                 <form action="{{ route('users.destroy', $user->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Yakin ingin menghapus anggota ini?')">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="btn btn-danger btn-sm">Hapus</button>
+                                    <button type="submit" class="btn btn-danger btn-sm">
+                                        Hapus
+                                    </button>
                                 </form>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="text-center text-muted">Belum ada data anggota.</td>
+                            
+                            <td colspan="6" class="text-center text-muted">
+                                Belum ada data anggota.
+                            </td>
                         </tr>
                     @endforelse
                 </tbody>

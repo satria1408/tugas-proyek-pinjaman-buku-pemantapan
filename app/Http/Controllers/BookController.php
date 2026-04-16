@@ -45,16 +45,29 @@ class BookController extends Controller
             'penulis' => 'required',
             'penerbit' => 'required',
             'kategori' => 'required',
-            'stok' => 'required|integer'
+            'stok' => 'required|integer',
+            'cover' => 'nullable|image|mimes:jpg,png,jpeg|max:2048'
         ]);
 
-        Book::create($request->only([
-            'judul',
-            'penulis',
-            'penerbit',
-            'kategori',
-            'stok'
-        ]));
+        $filePath = null;
+
+        if ($request->hasFile('cover')) {
+            $file = $request->file('cover');
+            $fileName = time() . '.' . $file->getClientOriginalExtension();
+
+            $file->storeAs('public/covers', $fileName);
+
+            $filePath = 'covers/' . $fileName;
+        }
+
+        Book::create([
+            'judul' => $request->judul,
+            'penulis' => $request->penulis,
+            'penerbit' => $request->penerbit,
+            'kategori' => $request->kategori,
+            'stok' => $request->stok,
+            'cover' => $filePath
+        ]);
 
         return redirect()->route('books.index')
             ->with('success', 'Buku berhasil ditambahkan');
@@ -75,18 +88,37 @@ class BookController extends Controller
             'penulis' => 'required',
             'penerbit' => 'required',
             'kategori' => 'required',
-            'stok' => 'required|integer'
+            'stok' => 'required|integer',
+            'cover' => 'nullable|image|mimes:jpg,png,jpeg|max:2048'
         ]);
 
         $book = Book::findOrFail($id);
 
-        $book->update($request->only([
-            'judul',
-            'penulis',
-            'penerbit',
-            'kategori',
-            'stok'
-        ]));
+        $filePath = $book->cover;
+
+        if ($request->hasFile('cover')) {
+
+            // hapus gambar lama
+            if ($book->cover && file_exists(storage_path('app/public/' . $book->cover))) {
+                unlink(storage_path('app/public/' . $book->cover));
+            }
+
+            $file = $request->file('cover');
+            $fileName = time() . '.' . $file->getClientOriginalExtension();
+
+            $file->storeAs('public/covers', $fileName);
+
+            $filePath = 'covers/' . $fileName;
+        }
+
+        $book->update([
+            'judul' => $request->judul,
+            'penulis' => $request->penulis,
+            'penerbit' => $request->penerbit,
+            'kategori' => $request->kategori,
+            'stok' => $request->stok,
+            'cover' => $filePath
+        ]);
 
         return redirect()->route('books.index')
             ->with('success', 'Buku berhasil diperbarui');
@@ -94,8 +126,14 @@ class BookController extends Controller
 
     public function destroy($id) 
     {
-        Book::findOrFail($id)->delete();
-        
+        $book = Book::findOrFail($id);
+
+        // hapus gambar jika ada
+        if ($book->cover && file_exists(storage_path('app/public/' . $book->cover))) {
+            unlink(storage_path('app/public/' . $book->cover));
+        }
+
+        $book->delete();
 
         return redirect()->route('books.index')
             ->with('success', 'Buku berhasil dihapus');
