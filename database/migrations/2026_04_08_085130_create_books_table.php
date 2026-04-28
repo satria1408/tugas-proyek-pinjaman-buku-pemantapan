@@ -13,11 +13,20 @@ return new class extends Migration
     {
         Schema::create('books', function (Blueprint $table) {
             $table->id();
+
             $table->string('judul');
             $table->string('penulis');
             $table->string('penerbit');
             $table->string('kategori');
             $table->integer('stok');
+            $table->integer('halaman')->nullable();
+            $table->text('deskripsi')->nullable();
+            $table->longText('content')->nullable();
+            $table->float('rating')->default(0);
+            $table->string('cover')->nullable();
+            $table->string('negara')->nullable();
+            $table->date('tanggal_rilis')->nullable();
+
             $table->timestamps();
         });
     }

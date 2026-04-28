@@ -49,7 +49,7 @@ class TransactionController extends Controller
             $book->decrement('stok');
         }
 
-        return redirect()->route('transactions.index')->with('success', 'Transaksi berhasil ditambahkan');
+        return redirect()->route('admin.transactions.index')->with('success', 'Transaksi berhasil ditambahkan');
     }
 
     public function edit(string $id)
@@ -85,7 +85,7 @@ class TransactionController extends Controller
         }
 
         $transaction->update($request->all());
-        return redirect()->route('transactions.index')->with('success', 'Data transaksi diperbarui');
+        return redirect()->route('admin.transactions.index')->with('success', 'Data transaksi diperbarui');
     }
 
     public function destroy(string $id)
@@ -95,6 +95,6 @@ class TransactionController extends Controller
             $transaction->book->increment('stok');
         }
         $transaction->delete();
-        return redirect()->route('transactions.index')->with('success', 'Transaksi dihapus');
+        return redirect()->route('admin.transactions.index')->with('success', 'Transaksi dihapus');
     }
 }

@@ -18,9 +18,12 @@ class User extends Authenticatable
     protected $fillable = [
         'username',
         'password',
+        'email',
         'nama_lengkap',
         'alamat',
         'role',
+        'provider',       
+        'provider_id'
     ];
 
     /**
@@ -48,5 +51,8 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+    public function ratings() {
+    return $this->hasMany(\App\Models\Rating::class);
     }
 }

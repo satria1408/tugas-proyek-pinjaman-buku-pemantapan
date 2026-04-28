@@ -5,7 +5,7 @@
 
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2 class="fw-bold">Kelola Transaksi</h2>
-        <a href="{{ route('transactions.create') }}" class="btn btn-primary shadow-sm">
+        <a href="{{ route('admin.transactions.create') }}" class="btn btn-primary shadow-sm">
             <i class="fas fa-plus"></i> Tambah Peminjaman Manual
         </a>
     </div>
@@ -79,11 +79,11 @@
                         </td>
 
                         <td>
-                            <a href="{{ route('transactions.edit', $trans->id) }}" class="btn btn-sm btn-info text-white">
+                            <a href="{{ route('admin.transactions.edit', $trans->id) }}" class="btn btn-sm btn-info text-white">
                                 <i class="fas fa-edit"></i>
                             </a>
 
-                            <form action="{{ route('transactions.destroy', $trans->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Hapus transaksi ini?')">
+                            <form action="{{ route('admin.transactions.destroy', $trans->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Hapus transaksi ini?')">
                                 @csrf 
                                 @method('DELETE')
                                 <button type="submit" class="btn btn-sm btn-danger">

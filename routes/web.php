@@ -3,9 +3,9 @@
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BookController;
-use App\Http\Controllers\SiswaController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\RatingController;
 use Illuminate\Support\Facades\Route;
 
 // ===============================
@@ -15,55 +15,79 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
+
 // ===============================
 // 2. AUTH
 // ===============================
 Route::controller(AuthController::class)->group(function () {
 
-    // LOGIN SISWA
     Route::get('/login', 'showLogin')->name('login');
     Route::post('/login', 'login');
 
-    //  LOGIN ADMIN (dari tombol toggle)
-    Route::post('/admin/login', 'loginAdmin')->name('admin.login');
-
-    // REGISTER
     Route::get('/register', 'showRegister')->name('register');
     Route::post('/register', 'register');
 
-    // LOGOUT
     Route::post('/logout', 'logout')->name('logout');
+
+    Route::get('/auth/google', 'redirectToGoogle')->name('google.login');
+    Route::get('/auth/google/callback', 'handleGoogleCallback');
 });
 
+
 // ===============================
-// 3. ADMIN
+// 3. DASHBOARD GLOBAL
+// ===============================
+Route::middleware(['auth'])->get('/dashboard', function () {
+    if (auth()->user()->role === 'admin') {
+        return redirect()->route('admin.dashboard');
+    }
+
+    return redirect()->route('siswa.dashboard');
+});
+
+
+// ===============================
+// 4. ADMIN
 // ===============================
 Route::middleware(['auth', 'role:admin'])
     ->prefix('admin')
+    ->name('admin.')
     ->group(function () {
 
-        Route::get('/dashboard', [AdminController::class, 'index'])->name('admin.dashboard');
+        Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');
 
         Route::resource('books', BookController::class);
         Route::resource('users', UserController::class);
         Route::resource('transactions', TransactionController::class);
     });
 
+
 // ===============================
-// 4. SISWA
+// 5. SISWA
 // ===============================
 Route::middleware(['auth', 'role:siswa'])
     ->prefix('siswa')
     ->name('siswa.')
     ->group(function () {
 
-        Route::get('/dashboard', [SiswaController::class, 'index'])->name('dashboard');
+        Route::get('/dashboard', [UserController::class, 'dashboard'])->name('dashboard');
 
-        Route::get('/books', [SiswaController::class, 'index'])->name('books.index');
-        Route::get('/transactions', [SiswaController::class, 'index'])->name('transactions.index');
+        // lihat detail buku
+        Route::get('/books/{id}', [BookController::class, 'show'])->name('books.show');
 
-        Route::post('/pinjam/{book_id}', [SiswaController::class, 'pinjamBuku'])->name('pinjam');
-        Route::post('/kembali/{transaction_id}', [SiswaController::class, 'kembalikanBuku'])->name('kembali');
+        Route::post('/pinjam/{book_id}', [UserController::class, 'pinjamBuku'])->name('pinjam');
+        Route::post('/kembali/{transaction_id}', [UserController::class, 'kembalikanBuku'])->name('kembali');
 
-        Route::delete('/transaksi/{id}', [SiswaController::class, 'destroy'])->name('destroy');
+        Route::delete('/transaksi/{id}', [UserController::class, 'destroyTransaction'])->name('destroy');
     });
+
+
+// ===============================
+// 6. ⭐ RATING (WAJIB ADA)
+// ===============================
+Route::middleware(['auth'])->group(function () {
+
+    Route::post('/rating/{book}', [RatingController::class, 'store'])
+        ->name('rating.store');
+
+});

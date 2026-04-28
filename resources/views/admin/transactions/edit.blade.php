@@ -9,7 +9,7 @@
                     <h5 class="mb-0">Edit Status Transaksi</h5>
                 </div>
                 <div class="card-body">
-                    <form action="{{ route('transactions.update', $transaction->id) }}" method="POST">
+                    <form action="{{ route('admin.transactions.update', $transaction->id) }}" method="POST">
                         @csrf
                         @method('PUT')
                         <div class="mb-3">
@@ -33,7 +33,7 @@
                             <small class="text-danger mt-1 d-block">* Mengubah status ke 'Kembali' akan otomatis menambah stok buku.</small>
                         </div>
                         <div class="d-flex justify-content-between mt-4">
-                            <a href="{{ route('transactions.index') }}" class="btn btn-secondary">Batal</a>
+                            <a href="{{ route('admin.transactions.index') }}" class="btn btn-secondary">Batal</a>
                             <button type="submit" class="btn btn-primary px-4">Update Status</button>
                         </div>
                     </form>

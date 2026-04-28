@@ -15,21 +15,38 @@ class Book extends Model
         'penulis', 
         'penerbit', 
         'kategori', 
-        'stok'
+        'stok',
+        'halaman',     
+        'deskripsi',   
+        'cover',
+        'content',   
+        'rating',
+        'negara',
+        'tanggal_rilis'   
     ];
 
-    
+    // RELASI
     public function transactions() 
     {
         return $this->hasMany(Transaction::class);
     }
 
+    // 🔥 OPTIONAL: FORMAT RATING (biar rapi 1 desimal)
+    public function getRatingAttribute($value)
+    {
+        return number_format($value, 1);
+    }
+
+    // REKOMENDASI BUKU
     public static function getRecommendations($userId)
     {
-        // 1. Ambil kategori favorit user
+        // Ambil kategori favorit user
         $favoriteCategory = Transaction::with('book')
             ->where('user_id', $userId)
             ->get()
+            ->filter(function ($trx) {
+                return $trx->book !== null; 
+            })
             ->groupBy(function ($trx) {
                 return $trx->book->kategori;
             })
@@ -39,7 +56,7 @@ class Book extends Model
             ->keys()
             ->first();
 
-        // 2. Ambil buku rekomendasi dari kategori tersebut
+        // Ambil buku rekomendasi
         if ($favoriteCategory) {
             return self::where('kategori', $favoriteCategory)
                 ->whereNotIn('id', function ($query) use ($userId) {
@@ -52,5 +69,9 @@ class Book extends Model
         }
 
         return collect(); 
+        
     }
+    public function ratings() {
+    return $this->hasMany(\App\Models\Rating::class);
+   }
 }

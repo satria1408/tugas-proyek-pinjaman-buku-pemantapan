@@ -9,7 +9,7 @@
                     <h5 class="mb-0">Edit Data Anggota</h5>
                 </div>
                 <div class="card-body">
-                    <form action="{{ route('users.update', $user->id) }}" method="POST">
+                    <form action="{{ route('admin.users.update', $user->id) }}" method="POST">
                         @csrf
                         @method('PUT')
 
@@ -45,7 +45,7 @@
                         <!-- ❌ ROLE DIHAPUS TOTAL -->
 
                         <div class="d-flex justify-content-between border-top pt-3">
-                            <a href="{{ route('users.index') }}" class="btn btn-secondary shadow-sm">
+                            <a href="{{ route('adminusers.index') }}" class="btn btn-secondary shadow-sm">
                                 Kembali
                             </a>
                             <button type="submit" class="btn btn-primary shadow-sm">

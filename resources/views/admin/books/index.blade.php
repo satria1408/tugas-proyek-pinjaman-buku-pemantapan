@@ -2,22 +2,26 @@
 
 @section('content')
 <div class="container mt-4">
+
+    <!-- HEADER -->
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2 class="fw-bold">Data Buku</h2>
-        <a href="{{ route('books.create') }}" class="btn btn-primary shadow-sm">
-            <i class="fas fa-plus"></i> Tambah Buku
+
+        <a href="{{ route('admin.books.create') }}" class="btn btn-primary shadow-sm">
+            + Tambah Buku
         </a>
     </div>
 
-    @if(session('success'))
+    @if(session('success'))  
         <div class="alert alert-success shadow-sm">
             {{ session('success') }}
         </div>
     @endif
 
     <!-- FILTER -->
-    <form method="GET" action="{{ route('books.index') }}" class="mb-3">
+    <form method="GET" action="{{ route('admin.books.index') }}" class="mb-4">
         <div class="row">
+
             <div class="col-md-3">
                 <input type="text" name="search" class="form-control"
                     placeholder="Cari judul buku..."
@@ -42,92 +46,97 @@
             </div>
 
             <div class="col-md-2">
-                <a href="{{ route('books.index') }}" class="btn btn-secondary w-100">Reset</a>
+                <a href="{{ route('admin.books.index') }}" class="btn btn-secondary w-100">
+                    Reset
+                </a>
             </div>
+
         </div>
     </form>
 
-    <!-- TABEL -->
-    <div class="card shadow-sm">
-        <div class="card-body p-0">
-            <table class="table table-hover table-striped mb-0">
-                <thead class="table-dark">
-                    <tr>
-                        <th width="50" class="text-center">No</th>
-                        <th width="100">Cover</th> <!-- TAMBAHAN -->
-                        <th>Judul</th>
-                        <th>Penulis</th>
-                        <th>Penerbit</th>
-                        <th>Kategori</th>
-                        <th width="100">Stok</th>
-                        <th width="180" class="text-center">Aksi</th>
-                    </tr>
-                </thead>
+    <!-- GRID -->
+    <div class="row">
 
-                <tbody>
-                    @forelse($books as $book)
-                    <tr>
-                        <td class="text-center">{{ $loop->iteration }}</td>
+        @forelse($books as $book)
+        <div class="col-md-3 mb-4">
 
-                        <!-- COVER GAMBAR -->
-                        <td>
-                            @if($book->cover)
-                                <img src="{{ asset('storage/' . $book->cover) }}"
-                                     width="60"
-                                     height="80"
-                                     style="object-fit: cover; border-radius: 5px;">
+            <div class="card shadow-sm border-0 h-100">
+
+                <!-- COVER -->
+                <a href="{{ route('admin.books.show', $book->id) }}">
+                    <img src="{{ $book->cover ? asset('storage/'.$book->cover) : 'https://via.placeholder.com/300x400' }}"
+                         class="card-img-top"
+                         style="height:300px; object-fit:cover;">
+                </a>
+
+                <div class="card-body text-center">
+
+                    <!-- JUDUL -->
+                    <h6 class="fw-bold mb-1">{{ $book->judul }}</h6>
+
+                    <!-- NEGARA + TAHUN -->
+                    <small class="text-muted d-block mb-1">
+                        {{ $book->negara ?? '-' }} 
+                        • 
+                        {{ $book->tanggal_rilis ? \Carbon\Carbon::parse($book->tanggal_rilis)->format('Y') : '-' }}
+                    </small>
+
+                    <!-- RATING -->
+                    @php
+                        $avg = $book->ratings->avg('rating');
+                        $total = $book->ratings->count();
+                    @endphp
+
+                    <div class="mb-2">
+                        @for ($i = 1; $i <= 5; $i++)
+                            @if ($i <= round($avg))
+                                ⭐
                             @else
-                                <span class="text-muted">No Image</span>
+                                ☆
                             @endif
-                        </td>
+                        @endfor
 
-                        <td>{{ $book->judul }}</td>
-                        <td>{{ $book->penulis }}</td>
+                        <small class="text-muted">({{ $total }})</small>
+                    </div>
 
-                        <td>
-                            <span class="badge bg-dark">
-                                {{ $book->penerbit }}
-                            </span>
-                        </td>
+                    <!-- AKSI -->
+                    <div class="d-flex justify-content-center gap-2">
+                        <a href="{{ route('admin.books.edit', $book->id) }}" 
+                           class="btn btn-warning btn-sm">
+                            Edit
+                        </a>
 
-                        <td>
-                            <span class="badge bg-secondary">
-                                {{ $book->kategori }}
-                            </span>
-                        </td>
+                        <form action="{{ route('admin.books.destroy', $book->id) }}" method="POST">
+                            @csrf
+                            @method('DELETE')
 
-                        <td>
-                            <span class="badge bg-info text-dark">
-                                {{ $book->stok }}
-                            </span>
-                        </td>
+                            <button class="btn btn-danger btn-sm"
+                                onclick="return confirm('Yakin hapus buku ini?')">
+                                Hapus
+                            </button>
+                        </form>
+                    </div>
 
-                        <td class="text-center">
-                            <a href="{{ route('books.edit', $book->id) }}" class="btn btn-warning btn-sm">
-                                <i class="fas fa-edit"></i> Edit
-                            </a>
+                </div>
 
-                            <form action="{{ route('books.destroy', $book->id) }}" method="POST" class="d-inline">
-                                @csrf 
-                                @method('DELETE')
-                                <button type="submit" class="btn btn-danger btn-sm"
-                                    onclick="return confirm('Yakin ingin menghapus buku ini?')">
-                                    <i class="fas fa-trash"></i> Hapus
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="8" class="text-center py-4 text-muted">
-                            <em>Belum ada data buku yang tersedia.</em>
-                        </td>
-                    </tr>
-                    @endforelse
-                </tbody>
+            </div>
 
-            </table>
         </div>
+        @empty
+        <div class="col-12 text-center text-muted py-5">
+            Belum ada data buku
+        </div>
+        @endforelse
+
     </div>
+
 </div>
+
+<style>
+.card:hover {
+    transform: scale(1.03);
+    transition: 0.3s;
+}
+</style>
+
 @endsection

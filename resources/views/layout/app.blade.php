@@ -6,57 +6,27 @@
     <title>Aplikasi Perpustakaan</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <style>
-        .navbar-glass {
-            background: linear-gradient(135deg, #4e73df, #224abe) !important;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-        }
-
-        /* TEXT NAVBAR */
-        .navbar-glass .navbar-brand,
-        .navbar-glass .nav-link,
-        .navbar-glass .navbar-text {
-            color: #fff !important;
-        }
-
-        /* ACTIVE MENU */
-        .navbar-glass .nav-link.active {
-            font-weight: bold;
-            border-bottom: 2px solid #fff;
-        }
-
-        /* HOVER */
-        .navbar-glass .nav-link:hover {
-            color: #dcdcdc !important;
-        }
-
-        /* BADGE ROLE */
-        .navbar-glass .badge {
-            background: rgba(255,255,255,0.2);
-            color: #fff;
-        }
-
-        body {
-            min-height: 100vh;
-        }
-    </style>
-
+    <link rel="stylesheet" href="{{ asset('css/layout.css') }}">
 </head>
 
 <body>
 
-    <nav class="navbar navbar-expand-lg navbar-dark navbar-glass mb-4">
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
         <div class="container">
-            <a class="navbar-brand" href="#">Perpustakaan</a>
+
+            <!-- 🔥 JUDUL TENGAH SIMPLE -->
+            <a class="navbar-brand mx-auto" href="#">
+                Perpustakaan Online
+            </a>
 
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
 
             <div class="collapse navbar-collapse" id="navbarNav">
+
                 @auth
-                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <ul class="navbar-nav me-auto">
 
                         {{-- ADMIN --}}
                         @if(Auth::user()->role == 'admin')
@@ -67,20 +37,14 @@
                             </li>
 
                             <li class="nav-item">
-                                <a class="nav-link {{ request()->routeIs('books.*') ? 'active' : '' }}" href="{{ route('books.index') }}">
-                                    Kelola Buku
+                                <a class="nav-link {{ request()->routeIs('books.*') ? 'active' : '' }}" href="{{ route('admin.books.index') }}">
+                                    Buku
                                 </a>
                             </li>
 
                             <li class="nav-item">
-                                <a class="nav-link {{ request()->routeIs('users.*') ? 'active' : '' }}" href="{{ route('users.index') }}">
-                                    Kelola Anggota
-                                </a>
-                            </li>
-
-                            <li class="nav-item">
-                                <a class="nav-link {{ request()->routeIs('transactions.*') ? 'active' : '' }}" href="{{ route('transactions.index') }}">
-                                    Transaksi
+                                <a class="nav-link {{ request()->routeIs('users.*') ? 'active' : '' }}" href="{{ route('admin.users.index') }}">
+                                    Anggota
                                 </a>
                             </li>
                         @endif
@@ -89,7 +53,7 @@
                         @if(Auth::user()->role == 'siswa')
                             <li class="nav-item">
                                 <a class="nav-link {{ request()->routeIs('siswa.dashboard') ? 'active' : '' }}" href="{{ route('siswa.dashboard') }}">
-                                    Dashboard & Peminjaman
+                                    Dashboard
                                 </a>
                             </li>
                         @endif
@@ -98,38 +62,21 @@
 
                     <div class="d-flex align-items-center">
                         <span class="navbar-text me-3">
-                            Halo, <strong>{{ Auth::user()->nama_lengkap }}</strong>
-                            <span class="badge ms-1">{{ ucfirst(Auth::user()->role) }}</span>
+                            {{ Auth::user()->nama_lengkap }}
                         </span>
 
-                        <form action="{{ route('logout') }}" method="POST" class="d-inline">
+                        <form action="{{ route('logout') }}" method="POST">
                             @csrf
                             <button class="btn btn-danger btn-sm">Logout</button>
                         </form>
                     </div>
                 @endauth
+
             </div>
         </div>
     </nav>
 
-    <div class="container">
-
-        {{-- SUCCESS --}}
-        @if(session('success'))
-            <div class="alert alert-success alert-dismissible fade show">
-                {{ session('success') }}
-                <button class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        @endif
-
-        {{-- ERROR --}}
-        @if(session('error'))
-            <div class="alert alert-danger alert-dismissible fade show">
-                {{ session('error') }}
-                <button class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        @endif
-
+    <div class="container" style="margin-top: 80px;">
         @yield('content')
     </div>
 

@@ -9,7 +9,7 @@
                     <h5 class="mb-0">Tambah Anggota Baru</h5>
                 </div>
                 <div class="card-body">
-                    <form action="{{ route('users.store') }}" method="POST">
+                    <form action="{{ route('admin.users.store') }}" method="POST">
                         @csrf
                         
                         <div class="mb-3">
@@ -41,7 +41,7 @@
                         </div>
 
                         <div class="d-flex justify-content-between border-top pt-3">
-                            <a href="{{ route('users.index') }}" class="btn btn-secondary shadow-sm">
+                            <a href="{{ route('admin.users.index') }}" class="btn btn-secondary shadow-sm">
                                 <i class="fas fa-arrow-left"></i> Kembali
                             </a>
                             <button type="submit" class="btn btn-success shadow-sm">

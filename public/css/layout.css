@@ -1,0 +1,41 @@
+      
+      /* app.blade.php */
+        .navbar-custom {
+            background: transparent !important;
+            position: absolute;
+            width: 100%;
+            top: 0;
+            z-index: 10;
+        }
+
+        
+        .navbar-brand {
+            margin: 0 auto;
+            color: #fff !important;
+            font-weight: 700;
+            font-size: 26px;
+            letter-spacing: 1px;
+            text-align: center;
+        }
+
+        .navbar-custom .nav-link,
+        .navbar-custom .navbar-text {
+            color: #fff !important;
+        }
+
+        .navbar-custom .nav-link.active {
+            border-bottom: 2px solid #fff;
+        }
+
+        .navbar-custom .nav-link:hover {
+            color: #ddd !important;
+        }
+
+        .navbar-custom .badge {
+            background: rgba(255,255,255,0.2);
+            color: #fff;
+        }
+
+        body {
+            min-height: 100vh;
+        }

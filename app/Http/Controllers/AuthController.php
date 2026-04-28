@@ -6,15 +6,21 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Laravel\Socialite\Facades\Socialite;
 
 class AuthController extends Controller
 {
-    
+    /**
+     * ================= LOGIN VIEW =================
+     */
     public function showLogin()
     {
         return view('auth.login');
     }
 
+    /**
+     * ================= LOGIN (ADMIN + SISWA) =================
+     */
     public function login(Request $request)
     {
         $credentials = $request->validate([
@@ -25,15 +31,8 @@ class AuthController extends Controller
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
 
-            // ❌ Jika admin login di sini → tolak
-            if (Auth::user()->role === 'admin') {
-                Auth::logout();
-                return back()->withErrors([
-                    'username' => 'Silakan login melalui halaman admin!'
-                ]);
-            }
-
-            return redirect()->intended('/siswa/dashboard');
+            // 🔥 redirect berdasarkan role
+            return redirect('/dashboard');
         }
 
         return back()->withErrors([
@@ -42,37 +41,44 @@ class AuthController extends Controller
     }
 
     /**
-     * ================= LOGIN ADMIN =================
+     * ================= GOOGLE LOGIN =================
      */
-    public function showAdminLogin()
+    public function redirectToGoogle()
     {
-        return view('auth.login');
+        return Socialite::driver('google')->redirect();
     }
 
-    public function loginAdmin(Request $request)
+    public function handleGoogleCallback()
     {
-        $credentials = $request->validate([
-            'username' => 'required',
-            'password' => 'required'
-        ]);
+        try {
+            // 🔥 FIX ERROR STATE
+            $googleUser = Socialite::driver('google')->stateless()->user();
 
-        if (Auth::attempt($credentials)) {
-            $request->session()->regenerate();
+            // 🔍 cari user berdasarkan email
+            $user = User::where('email', $googleUser->getEmail())->first();
 
-            // ❌ Jika bukan admin → tolak
-            if (Auth::user()->role !== 'admin') {
-                Auth::logout();
-                return back()->withErrors([
-                    'username' => 'Akun ini bukan admin!'
+            if (!$user) {
+                // 🆕 buat user baru
+                $user = User::create([
+                    'username' => null,
+                    'email' => $googleUser->getEmail(),
+                    'password' => Hash::make('random123'),
+                    'nama_lengkap' => $googleUser->getName(),
+                    'alamat' => null,
+                    'role' => 'siswa',
+                    'provider' => 'google',
+                    'provider_id' => $googleUser->getId()
                 ]);
             }
 
-            return redirect()->intended('/admin/dashboard');
-        }
+            Auth::login($user);
 
-        return back()->withErrors([
-            'username' => 'Username atau password salah!',
-        ]);
+            // 🔥 redirect ke dashboard global
+            return redirect('/dashboard');
+
+        } catch (\Exception $e) {
+            return redirect('/login')->with('error', 'Login Google gagal!');
+        }
     }
 
     /**
@@ -93,14 +99,21 @@ class AuthController extends Controller
 
         User::create([
             'username'     => $request->username,
+            'email'        => null,
             'password'     => Hash::make($request->password),
             'nama_lengkap' => $request->nama_lengkap,
-            'role'         => 'siswa' // default user
+            'alamat'       => null,
+            'role'         => 'siswa',
+            'provider'     => null,
+            'provider_id'  => null
         ]);
 
-        return redirect('/login')->with('success', 'Berhasil daftar, silakan login!');
+        return redirect('/login')->with('success', 'Berhasil daftar!');
     }
 
+    /**
+     * ================= LOGOUT =================
+     */
     public function logout(Request $request)
     {
         Auth::logout();

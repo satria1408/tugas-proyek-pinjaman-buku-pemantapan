@@ -16,7 +16,7 @@
             </div>
             <div class="card-body">
                 <p class="card-text">Tambah, Edit, dan Hapus data koleksi buku perpustakaan.</p>
-                <a href="{{ route('books.index') }}" class="btn btn-light btn-sm w-100">Buka Menu</a>
+                <a href="{{ route('admin.books.index') }}" class="btn btn-light btn-sm w-100">Buka Menu</a>
             </div>
         </div>
     </div>
@@ -30,7 +30,7 @@
             </div>
             <div class="card-body text-dark">
                 <p class="card-text">Manajemen data siswa dan aktivasi akun anggota.</p>
-                <a href="{{ route('users.index') }}" class="btn btn-dark btn-sm w-100">Buka Menu</a>
+                <a href="{{ route('admin.users.index') }}" class="btn btn-dark btn-sm w-100">Buka Menu</a>
             </div>
         </div>
     </div>
@@ -41,7 +41,7 @@
             <div class="card-header">Laporan Transaksi</div>
             <div class="card-body">
                 <p class="card-text">Lihat dan cetak riwayat peminjaman serta pengembalian.</p>
-                <a href="{{ route('transactions.index') }}" class="btn btn-light btn-sm w-100">Buka Menu</a>
+                <a href="{{ route('admin.transactions.index') }}" class="btn btn-light btn-sm w-100">Buka Menu</a>
             </div>
         </div>
     </div>

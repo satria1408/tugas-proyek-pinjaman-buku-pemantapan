@@ -2,83 +2,53 @@
 
 @section('content')
 <style>
-    body {
-        background: #245db3;
-    }
+    body { background: #245db3; }
 
-    .card {
-        border: none;
-        border-radius: 16px;
-    }
+    .card { border: none; border-radius: 16px; }
+    .card-header { border-radius: 16px 16px 0 0; font-weight: 600; }
 
-    .card-header {
-        border-radius: 16px 16px 0 0;
-        font-weight: 600;
-        font-size: 18px;
-    }
+    .table td { vertical-align: middle; }
 
-    .table th {
-        font-weight: 600;
-        font-size: 14px;
-    }
-
-    .table td {
-        vertical-align: middle;
-    }
-
-    .btn-primary {
-        background: linear-gradient(135deg, #4e73df, #224abe);
-        border: none;
-    }
-
-    .btn-warning {
-        background: linear-gradient(135deg, #f6c23e, #dda20a);
-        border: none;
-    }
-
-    .badge {
-        font-size: 12px;
-        padding: 6px 10px;
-        border-radius: 10px;
-    }
-
-    .table-hover tbody tr:hover {
-        background-color: #4b72d4;
-        transition: 0.2s;
+    .cover-img {
+        width: 60px;
+        height: 80px;
+        object-fit: cover;
+        border-radius: 6px;
+        border: 1px solid #ddd;
     }
 </style>
 
 <div class="container py-4">
 
-    <h2 class="mb-4 fw-bold text-dark"> Dashboard Siswa</h2>
+    <h2 class="mb-4 fw-bold text-dark">Dashboard Siswa</h2>
 
+    {{-- ALERT --}}
     @if(session('success'))
-        <div class="alert alert-success shadow-sm">
-            {{ session('success') }}
-        </div>
+        <div class="alert alert-success shadow-sm">{{ session('success') }}</div>
     @endif
 
     @if(session('error'))
-        <div class="alert alert-danger shadow-sm">
-            {{ session('error') }}
-        </div>
+        <div class="alert alert-danger shadow-sm">{{ session('error') }}</div>
     @endif
 
 
+    <!-- ========================= -->
+    <!-- 🔵 TABEL 1: DAFTAR BUKU -->
+    <!-- ========================= -->
     <div class="card shadow-sm mb-4">
         <div class="card-header bg-primary text-white">
-             Peminjaman Buku
+            Daftar Buku
         </div>
 
         <div class="card-body">
 
-            <form method="GET" class="row mb-3">
+            <!-- FILTER -->
+            <form method="GET" action="{{ route('siswa.dashboard') }}" class="row mb-3">
                 <div class="col-md-4">
                     <select name="kategori" class="form-control">
-                        <option value=""> Semua Kategori</option>
+                        <option value="">Semua Kategori</option>
                         @foreach($categories as $cat)
-                            <option value="{{ $cat }}" 
-                                {{ request('kategori') == $cat ? 'selected' : '' }}>
+                            <option value="{{ $cat }}" {{ request('kategori') == $cat ? 'selected' : '' }}>
                                 {{ $cat }}
                             </option>
                         @endforeach
@@ -87,20 +57,23 @@
 
                 <div class="col-md-4">
                     <input type="text" name="search" class="form-control"
-                        placeholder="🔍 Cari judul buku..."
+                        placeholder="Cari judul buku..."
                         value="{{ request('search') }}">
                 </div>
 
                 <div class="col-md-4 d-flex gap-2">
                     <button class="btn btn-primary w-50">Filter</button>
-                    <a href="" class="btn btn-secondary w-50">Reset</a>
+                    <a href="{{ route('siswa.dashboard') }}" class="btn btn-secondary w-50">Reset</a>
                 </div>
             </form>
 
-            <table class="table table-hover align-middle">
+            <table class="table table-hover">
                 <thead class="table-light">
                     <tr>
-                        <th>Judul Buku</th>
+                        <th width="90">Cover</th>
+                        <th>Judul</th>
+                        <th>Penulis</th>
+                        <th>Penerbit</th>
                         <th>Kategori</th>
                         <th class="text-center">Stok</th>
                         <th class="text-center">Aksi</th>
@@ -110,12 +83,25 @@
                 <tbody>
                     @foreach($books as $book)
                     <tr>
-                        <td class="fw-semibold">{{ $book->judul }}</td>
+                        <!-- COVER -->
+                        <td>
+                            @if($book->cover && file_exists(storage_path('app/public/' . $book->cover)))
+                                <img src="{{ asset('storage/' . $book->cover) }}" class="cover-img">
+                            @else
+                                <span class="text-muted small">No Image</span>
+                            @endif
+                        </td>
+
+                        <td class="fw-bold">{{ $book->judul }}</td>
+
+                        <td>{{ $book->penulis }}</td>
 
                         <td>
-                            <span class="badge bg-secondary">
-                                {{ $book->kategori }}
-                            </span>
+                            <span class="badge bg-dark">{{ $book->penerbit }}</span>
+                        </td>
+
+                        <td>
+                            <span class="badge bg-secondary">{{ $book->kategori }}</span>
                         </td>
 
                         <td class="text-center">
@@ -126,11 +112,9 @@
 
                         <td class="text-center">
                             @if($book->stok > 0)
-                                <form action="/siswa/pinjam/{{ $book->id }}" method="POST">
+                                <form action="{{ route('siswa.pinjam', $book->id) }}" method="POST">
                                     @csrf
-                                    <button class="btn btn-sm btn-primary px-3">
-                                        Pinjam
-                                    </button>
+                                    <button class="btn btn-sm btn-primary">Pinjam</button>
                                 </form>
                             @else
                                 <span class="badge bg-danger">Habis</span>
@@ -144,20 +128,58 @@
         </div>
     </div>
 
+
+    <!-- ========================= -->
+    <!-- 🟡 TABEL 2: DETAIL -->
+    <!-- ========================= -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-warning text-dark">
+            Detail Buku
+        </div>
+
+        <div class="card-body p-0">
+            <table class="table table-bordered mb-0">
+                <thead>
+                    <tr>
+                        <th>Judul</th>
+                        <th>Penulis</th>
+                        <th>Penerbit</th>
+                        <th>Deskripsi</th>
+                        <th>Halaman</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach($books as $book)
+                    <tr>
+                        <td class="fw-bold">{{ $book->judul }}</td>
+                        <td>{{ $book->penulis }}</td>
+                        <td>{{ $book->penerbit }}</td>
+                        <td>{{ $book->deskripsi ?? '-' }}</td>
+                        <td>{{ $book->halaman ? $book->halaman . ' halaman' : '-' }}</td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+
+    <!-- ========================= -->
+    <!-- 🟢 TABEL 3: DIPINJAM -->
+    <!-- ========================= -->
     <div class="card shadow-sm">
         <div class="card-header bg-success text-white">
-             Buku yang Dipinjam
+            Buku yang Dipinjam
         </div>
 
         <div class="card-body">
 
             @if($myBooks->isEmpty())
-                <div class="text-center text-muted py-4">
-                     Belum ada buku dipinjam
-                </div>
+                <div class="text-center text-muted">Belum ada buku dipinjam</div>
             @else
-                <table class="table table-hover align-middle text-center">
-                    <thead class="table-light">
+                <table class="table table-hover text-center align-middle">
+                    <thead>
                         <tr>
                             <th>Judul</th>
                             <th>Pinjam</th>
@@ -177,17 +199,11 @@
 
                         <tr class="{{ now()->gt($tglKembali) ? 'table-danger' : '' }}">
 
-                            <td class="fw-semibold">
-                                {{ $trans->book->judul }}
-                            </td>
+                            <td class="fw-semibold">{{ $trans->book->judul }}</td>
 
-                            <td>
-                                {{ $tglPinjam->format('d M Y') }}
-                            </td>
+                            <td>{{ $tglPinjam->format('d M Y') }}</td>
 
-                            <td>
-                                {{ $tglKembali->format('d M Y') }}
-                            </td>
+                            <td>{{ $tglKembali->format('d M Y') }}</td>
 
                             <td>
                                 @if(now()->gt($tglKembali))
@@ -197,6 +213,7 @@
                                 @endif
                             </td>
 
+                            <!-- DENDA -->
                             <td>
                                 @if($trans->denda)
                                     <span class="badge bg-danger">
@@ -207,23 +224,21 @@
                                 @endif
                             </td>
 
-                            <!--  AKSI: KEMBALIKAN + DELETE -->
+                            <!-- AKSI -->
                             <td class="d-flex justify-content-center gap-2">
 
-                                <!-- KEMBALIKAN -->
                                 <form action="{{ route('siswa.kembali', $trans->id) }}" method="POST">
                                     @csrf
-                                    <button class="btn btn-sm btn-warning px-3 text-white">
+                                    <button class="btn btn-sm btn-warning text-white">
                                         Kembalikan
                                     </button>
                                 </form>
 
-                                <!-- DELETE -->
                                 <form action="{{ route('siswa.destroy', $trans->id) }}" method="POST"
                                       onsubmit="return confirm('Yakin hapus? Ini untuk salah pinjam!')">
                                     @csrf
                                     @method('DELETE')
-                                    <button class="btn btn-sm btn-danger px-3">
+                                    <button class="btn btn-sm btn-danger">
                                         Delete
                                     </button>
                                 </form>
