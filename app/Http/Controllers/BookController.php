@@ -46,7 +46,6 @@ class BookController extends Controller
             'stok' => 'required|integer',
             'halaman' => 'nullable|integer|min:1',
             'deskripsi' => 'nullable',
-            'content' => 'nullable',
             'negara' => 'nullable|string|max:100',
             'tanggal_rilis' => 'nullable|date',
 
@@ -67,7 +66,6 @@ class BookController extends Controller
             'stok' => $request->stok,
             'halaman' => $request->halaman,
             'deskripsi' => $request->deskripsi,
-            'content' => $request->content,
             'negara' => $request->negara,
             'tanggal_rilis' => $request->tanggal_rilis,
 
@@ -102,7 +100,6 @@ class BookController extends Controller
             'stok' => 'required|integer',
             'halaman' => 'nullable|integer|min:1',
             'deskripsi' => 'nullable',
-            'content' => 'nullable',
             'negara' => 'nullable|string|max:100',
             'tanggal_rilis' => 'nullable|date',
 
@@ -130,7 +127,6 @@ class BookController extends Controller
             'stok' => $request->stok,
             'halaman' => $request->halaman,
             'deskripsi' => $request->deskripsi,
-            'content' => $request->content,
             'negara' => $request->negara,
             'tanggal_rilis' => $request->tanggal_rilis,
 

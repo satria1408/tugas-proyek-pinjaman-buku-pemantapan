@@ -21,7 +21,6 @@ return new class extends Migration
             $table->integer('stok');
             $table->integer('halaman')->nullable();
             $table->text('deskripsi')->nullable();
-            $table->longText('content')->nullable();
             $table->float('rating')->default(0);
             $table->string('cover')->nullable();
             $table->string('negara')->nullable();

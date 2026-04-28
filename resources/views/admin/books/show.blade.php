@@ -5,7 +5,7 @@
 
     <div class="row justify-content-center">
 
-        <div class="col-md-8">
+        <div class="col-md-10">
 
             <div class="card shadow border-0 p-4">
 
@@ -29,52 +29,19 @@
                         {{ $book->deskripsi }}
                     </p>
 
-                    <!-- ⭐ RATING (FIX) -->
-                    <p><b>Rating:</b>
-
-                        @php
-                            $avg = $book->average_rating ?? 0;
-                        @endphp
-
-                        @for ($i = 1; $i <= 5; $i++)
-                            @if ($i <= round($avg))
-                                ⭐
-                            @else
-                                ☆
-                            @endif
-                        @endfor
-
-                        ({{ $book->total_rating }} orang)
-                    </p>
-
-                    <!-- 🔥 FORM RATING -->
-                    @auth
-                    <form action="{{ route('rating.store', $book->id) }}" method="POST" class="mt-2">
-                        @csrf
-
-                        <div class="d-flex align-items-center gap-2">
-                            <select name="rating" class="form-control w-auto">
-                                <option value="5">⭐⭐⭐⭐⭐</option>
-                                <option value="4">⭐⭐⭐⭐</option>
-                                <option value="3">⭐⭐⭐</option>
-                                <option value="2">⭐⭐</option>
-                                <option value="1">⭐</option>
-                            </select>
-
-                            <button class="btn btn-primary btn-sm">
-                                Kirim
-                            </button>
-                        </div>
-                    </form>
-                    @endauth
-
                     <hr>
 
-                    <!-- CONTENT -->
-                    <h5>Isi Buku</h5>
+                    <!-- 📖 ISI BUKU SLIDE -->
+                    <h5 class="mb-3">Isi Buku</h5>
 
-                    <div style="max-height:300px; overflow:auto; white-space:pre-line; text-align:justify;">
-                        {{ $book->content }}
+                    <div class="ebook-container">
+
+                        @foreach(str_split($book->content ?? '', 800) as $page)
+                            <div class="ebook-page">
+                                {{ $page }}
+                            </div>
+                        @endforeach
+
                     </div>
 
                 </div>
@@ -86,4 +53,41 @@
     </div>
 
 </div>
+
+<!-- 🔥 STYLE EBOOK -->
+<style>
+.ebook-container {
+    display: flex;
+    overflow-x: auto;
+    gap: 20px;
+    padding: 10px;
+    scroll-snap-type: x mandatory;
+}
+
+.ebook-container::-webkit-scrollbar {
+    height: 8px;
+}
+
+.ebook-container::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 10px;
+}
+
+.ebook-page {
+    min-width: 320px;
+    max-width: 320px;
+    height: 420px;
+    padding: 20px;
+    border-radius: 12px;
+    background: #f8f9fa;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+
+    scroll-snap-align: start;
+
+    text-align: justify;
+    line-height: 1.7;
+    font-size: 14px;
+}
+</style>
+
 @endsection

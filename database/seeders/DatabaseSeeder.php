@@ -62,9 +62,6 @@ class DatabaseSeeder extends Seeder
     'halaman' => 320,
     'deskripsi' => 'Buku tentang filosofi stoik untuk kehidupan sehari-hari.',
     'cover' => null,
-    'content' => 'Filosofi Teras mengajarkan kita untuk fokus pada hal-hal yang bisa kita kontrol...',
-
-    
     'negara' => 'Indonesia',
     'tanggal_rilis' => '2019-03-15'
 ]);
@@ -78,8 +75,6 @@ $buku2 = Book::create([
     'halaman' => 150,
     'deskripsi' => 'Panduan memasak untuk pemula dengan resep sederhana.',
     'cover' => null,
-    'content' => 'Buku ini berisi berbagai resep sederhana yang cocok untuk pemula...',
-
     'negara' => 'Indonesia',
     'tanggal_rilis' => '2020-06-10'
 ]);
@@ -93,8 +88,6 @@ $buku3 = Book::create([
     'halaman' => 90,
     'deskripsi' => 'Panduan dasar beternak ayam untuk pemula.',
     'cover' => null,
-    'content' => 'Beternak ayam membutuhkan pengetahuan dasar seperti pemilihan bibit...',
-
     'negara' => 'Indonesia',
     'tanggal_rilis' => '2018-01-20'
 ]);

@@ -4,17 +4,42 @@
 <style>
     body { background: #245db3; }
 
-    .card { border: none; border-radius: 16px; }
-    .card-header { border-radius: 16px 16px 0 0; font-weight: 600; }
+    .card {
+        border: none;
+        border-radius: 14px;
+        overflow: hidden;
+    }
 
-    .table td { vertical-align: middle; }
+    .card:hover {
+        transform: translateY(-5px);
+        transition: 0.3s;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+    }
 
-    .cover-img {
-        width: 60px;
-        height: 80px;
+    .book-img {
+        height: 260px;
         object-fit: cover;
-        border-radius: 6px;
-        border: 1px solid #ddd;
+    }
+
+    .badge-popular {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background: red;
+        color: #fff;
+        font-size: 12px;
+        padding: 4px 8px;
+        border-radius: 8px;
+    }
+
+    .bookmark-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: white;
+        border-radius: 50%;
+        padding: 5px 8px;
+        border: none;
     }
 </style>
 
@@ -22,153 +47,126 @@
 
     <h2 class="mb-4 fw-bold text-dark">Dashboard Siswa</h2>
 
-    {{-- ALERT --}}
     @if(session('success'))
-        <div class="alert alert-success shadow-sm">{{ session('success') }}</div>
+        <div class="alert alert-success">{{ session('success') }}</div>
     @endif
 
-    @if(session('error'))
-        <div class="alert alert-danger shadow-sm">{{ session('error') }}</div>
-    @endif
-
-
-    <!-- ========================= -->
-    <!-- 🔵 TABEL 1: DAFTAR BUKU -->
-    <!-- ========================= -->
-    <div class="card shadow-sm mb-4">
-        <div class="card-header bg-primary text-white">
-            Daftar Buku
+    <!-- FILTER -->
+    <form method="GET" action="{{ route('siswa.dashboard') }}" class="row mb-4">
+        <div class="col-md-4">
+            <select name="kategori" class="form-control">
+                <option value="">Semua Kategori</option>
+                @foreach($categories as $cat)
+                    <option value="{{ $cat }}" {{ request('kategori') == $cat ? 'selected' : '' }}>
+                        {{ $cat }}
+                    </option>
+                @endforeach
+            </select>
         </div>
 
-        <div class="card-body">
+        <div class="col-md-4">
+            <input type="text" name="search" class="form-control"
+                placeholder="Cari buku..."
+                value="{{ request('search') }}">
+        </div>
 
-            <!-- FILTER -->
-            <form method="GET" action="{{ route('siswa.dashboard') }}" class="row mb-3">
-                <div class="col-md-4">
-                    <select name="kategori" class="form-control">
-                        <option value="">Semua Kategori</option>
-                        @foreach($categories as $cat)
-                            <option value="{{ $cat }}" {{ request('kategori') == $cat ? 'selected' : '' }}>
-                                {{ $cat }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
+        <div class="col-md-4 d-flex gap-2">
+            <button class="btn btn-light w-50">Filter</button>
+            <a href="{{ route('siswa.dashboard') }}" class="btn btn-dark w-50">Reset</a>
+        </div>
+    </form>
 
-                <div class="col-md-4">
-                    <input type="text" name="search" class="form-control"
-                        placeholder="Cari judul buku..."
-                        value="{{ request('search') }}">
-                </div>
+    <!-- 📚 GRID BUKU -->
+    <div class="row">
 
-                <div class="col-md-4 d-flex gap-2">
-                    <button class="btn btn-primary w-50">Filter</button>
-                    <a href="{{ route('siswa.dashboard') }}" class="btn btn-secondary w-50">Reset</a>
-                </div>
-            </form>
+        @forelse($books as $book)
+        <div class="col-md-3 mb-4">
 
-            <table class="table table-hover">
-                <thead class="table-light">
-                    <tr>
-                        <th width="90">Cover</th>
-                        <th>Judul</th>
-                        <th>Penulis</th>
-                        <th>Penerbit</th>
-                        <th>Kategori</th>
-                        <th class="text-center">Stok</th>
-                        <th class="text-center">Aksi</th>
-                    </tr>
-                </thead>
+            <div class="card position-relative">
 
-                <tbody>
-                    @foreach($books as $book)
-                    <tr>
-                        <!-- COVER -->
-                        <td>
-                            @if($book->cover && file_exists(storage_path('app/public/' . $book->cover)))
-                                <img src="{{ asset('storage/' . $book->cover) }}" class="cover-img">
+                <!-- 🔥 POPULER -->
+                @if(($book->total_rating ?? 0) >= 3)
+                    <div class="badge-popular">🔥 Populer</div>
+                @endif
+
+                
+
+                <!-- COVER -->
+                <a href="{{ route('siswa.books.show', $book->id) }}">
+                    <img src="{{ $book->cover ? asset('storage/'.$book->cover) : 'https://via.placeholder.com/300x400' }}"
+                         class="card-img-top book-img">
+                </a>
+
+                <!-- BODY -->
+                <div class="card-body text-center">
+
+                    <h6 class="fw-bold">{{ $book->judul }}</h6>
+
+                    <small class="text-muted d-block mb-1">
+                        {{ $book->penulis }}
+                    </small>
+
+                    <span class="badge bg-secondary mb-2">
+                        {{ $book->kategori }}
+                    </span>
+
+                    <!-- ⭐ RATING -->
+                    <div class="mb-2">
+                        @php $avg = round($book->average_rating ?? 0); @endphp
+
+                        @for ($i = 1; $i <= 5; $i++)
+                            @if ($i <= $avg)
+                                ⭐
                             @else
-                                <span class="text-muted small">No Image</span>
+                                ☆
                             @endif
-                        </td>
+                        @endfor
 
-                        <td class="fw-bold">{{ $book->judul }}</td>
+                        <br>
+                        <small class="text-muted">
+                            ({{ $book->total_rating ?? 0 }})
+                        </small>
+                    </div>
 
-                        <td>{{ $book->penulis }}</td>
+                    <!-- STOK -->
+                    <span class="badge {{ $book->stok > 0 ? 'bg-info text-dark' : 'bg-danger' }}">
+                        Stok: {{ $book->stok }}
+                    </span>
 
-                        <td>
-                            <span class="badge bg-dark">{{ $book->penerbit }}</span>
-                        </td>
+                    <!-- AKSI -->
+                    <div class="mt-2">
+                        @if($book->stok > 0)
+                            <form action="{{ route('siswa.pinjam', $book->id) }}" method="POST">
+                                @csrf
+                                <button class="btn btn-primary btn-sm w-100">
+                                    Pinjam
+                                </button>
+                            </form>
+                        @else
+                            <button class="btn btn-secondary btn-sm w-100" disabled>
+                                Habis
+                            </button>
+                        @endif
+                    </div>
 
-                        <td>
-                            <span class="badge bg-secondary">{{ $book->kategori }}</span>
-                        </td>
+                </div>
 
-                        <td class="text-center">
-                            <span class="badge {{ $book->stok > 0 ? 'bg-info text-dark' : 'bg-secondary' }}">
-                                {{ $book->stok }}
-                            </span>
-                        </td>
-
-                        <td class="text-center">
-                            @if($book->stok > 0)
-                                <form action="{{ route('siswa.pinjam', $book->id) }}" method="POST">
-                                    @csrf
-                                    <button class="btn btn-sm btn-primary">Pinjam</button>
-                                </form>
-                            @else
-                                <span class="badge bg-danger">Habis</span>
-                            @endif
-                        </td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
+            </div>
 
         </div>
+        @empty
+        <div class="col-12 text-center text-muted py-5">
+            Tidak ada buku
+        </div>
+        @endforelse
+
     </div>
 
 
     <!-- ========================= -->
-    <!-- 🟡 TABEL 2: DETAIL -->
+    <!-- 🟢 BUKU DIPINJAM -->
     <!-- ========================= -->
-    <div class="card shadow-sm mb-4">
-        <div class="card-header bg-warning text-dark">
-            Detail Buku
-        </div>
-
-        <div class="card-body p-0">
-            <table class="table table-bordered mb-0">
-                <thead>
-                    <tr>
-                        <th>Judul</th>
-                        <th>Penulis</th>
-                        <th>Penerbit</th>
-                        <th>Deskripsi</th>
-                        <th>Halaman</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-                    @foreach($books as $book)
-                    <tr>
-                        <td class="fw-bold">{{ $book->judul }}</td>
-                        <td>{{ $book->penulis }}</td>
-                        <td>{{ $book->penerbit }}</td>
-                        <td>{{ $book->deskripsi ?? '-' }}</td>
-                        <td>{{ $book->halaman ? $book->halaman . ' halaman' : '-' }}</td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-
-    <!-- ========================= -->
-    <!-- 🟢 TABEL 3: DIPINJAM -->
-    <!-- ========================= -->
-    <div class="card shadow-sm">
+    <div class="card shadow-sm mt-4">
         <div class="card-header bg-success text-white">
             Buku yang Dipinjam
         </div>
@@ -178,14 +176,13 @@
             @if($myBooks->isEmpty())
                 <div class="text-center text-muted">Belum ada buku dipinjam</div>
             @else
-                <table class="table table-hover text-center align-middle">
+                <table class="table text-center align-middle">
                     <thead>
                         <tr>
                             <th>Judul</th>
                             <th>Pinjam</th>
                             <th>Kembali</th>
                             <th>Status</th>
-                            <th>Denda</th>
                             <th>Aksi</th>
                         </tr>
                     </thead>
@@ -194,15 +191,12 @@
                         @foreach($myBooks as $trans)
                         @php
                             $tglPinjam = \Carbon\Carbon::parse($trans->tanggal_pinjam);
-                            $tglKembali = $tglPinjam->copy()->addDays($trans->lama_pinjam ?? 7);
+                            $tglKembali = $tglPinjam->copy()->addDays(7);
                         @endphp
 
-                        <tr class="{{ now()->gt($tglKembali) ? 'table-danger' : '' }}">
-
-                            <td class="fw-semibold">{{ $trans->book->judul }}</td>
-
+                        <tr>
+                            <td>{{ $trans->book->judul }}</td>
                             <td>{{ $tglPinjam->format('d M Y') }}</td>
-
                             <td>{{ $tglKembali->format('d M Y') }}</td>
 
                             <td>
@@ -213,38 +207,14 @@
                                 @endif
                             </td>
 
-                            <!-- DENDA -->
                             <td>
-                                @if($trans->denda)
-                                    <span class="badge bg-danger">
-                                        Rp {{ number_format($trans->denda->jumlah_denda) }}
-                                    </span>
-                                @else
-                                    <span class="badge bg-success">-</span>
-                                @endif
-                            </td>
-
-                            <!-- AKSI -->
-                            <td class="d-flex justify-content-center gap-2">
-
                                 <form action="{{ route('siswa.kembali', $trans->id) }}" method="POST">
                                     @csrf
-                                    <button class="btn btn-sm btn-warning text-white">
+                                    <button class="btn btn-warning btn-sm">
                                         Kembalikan
                                     </button>
                                 </form>
-
-                                <form action="{{ route('siswa.destroy', $trans->id) }}" method="POST"
-                                      onsubmit="return confirm('Yakin hapus? Ini untuk salah pinjam!')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button class="btn btn-sm btn-danger">
-                                        Delete
-                                    </button>
-                                </form>
-
                             </td>
-
                         </tr>
                         @endforeach
                     </tbody>

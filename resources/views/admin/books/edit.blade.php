@@ -124,14 +124,6 @@
                value="{{ old('tanggal_rilis', $book->tanggal_rilis) }}">
     </div>
 </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Isi Buku</label>
-                            <textarea name="content"
-                                      class="form-control"
-                                      rows="6"
-                                      placeholder="Masukkan isi buku...">{{ old('content', $book->content) }}</textarea>
-                        </div>
-
                         <!-- BUTTON -->
                         <div class="d-flex justify-content-between mt-4 border-top pt-3">
                             <a href="{{ route('admin.books.index') }}" class="btn btn-secondary">

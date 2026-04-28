@@ -18,8 +18,7 @@ class Book extends Model
         'stok',
         'halaman',     
         'deskripsi',   
-        'cover',
-        'content',   
+        'cover',   
         'rating',
         'negara',
         'tanggal_rilis'   
