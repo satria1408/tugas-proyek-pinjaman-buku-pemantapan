@@ -10,6 +10,8 @@ class Transaction extends Model
         'user_id',
         'book_id',
         'tanggal_pinjam',
+        'tanggal_kembali',
+        'tanggal_pengembalian',
         'status',
     ];
 
@@ -25,6 +27,7 @@ class Transaction extends Model
         return $this->belongsTo(Book::class);
     }
 
+    // Relasi ke Denda
     public function denda()
     {
         return $this->hasOne(Denda::class, 'transaction_id');

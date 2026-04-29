@@ -20,9 +20,10 @@
                         <th>Peminjam</th>
                         <th>Buku</th>
                         <th>Tgl Pinjam</th>
-                        <th>Tgl Kembali</th> {{-- ✅ BARU --}}
+                        <th>Deadline</th>
+                        <th>Tgl Pengembalian</th>
                         <th>Status</th>
-                        <th>Denda</th> {{-- ✅ BARU --}}
+                        <th>Denda</th>
                         <th>Aksi</th>
                     </tr>
                 </thead>
@@ -32,10 +33,13 @@
 
                     @php
                         $tglPinjam = \Carbon\Carbon::parse($trans->tanggal_pinjam);
-                        $tglKembali = $tglPinjam->copy()->addDays($trans->lama_pinjam ?? 7);
+                        $deadline = \Carbon\Carbon::parse($trans->tanggal_kembali);
+                        $tglKembali = $trans->tanggal_pengembalian 
+                            ? \Carbon\Carbon::parse($trans->tanggal_pengembalian) 
+                            : null;
                     @endphp
 
-                    <tr class="{{ now()->gt($tglKembali) && $trans->status == 'pinjam' ? 'table-danger' : '' }}">
+                    <tr class="{{ now()->gt($deadline) && $trans->status == 'pinjam' ? 'table-danger' : '' }}">
 
                         <td>{{ $loop->iteration }}</td>
 
@@ -51,23 +55,28 @@
                             {{ $tglPinjam->format('d M Y') }}
                         </td>
 
-                        {{-- ✅ TANGGAL KEMBALI --}}
+                        {{-- DEADLINE --}}
                         <td>
-                            {{ $tglKembali->format('d M Y') }}
+                            {{ $deadline->format('d M Y') }}
                         </td>
 
-                        {{-- ✅ STATUS DINAMIS --}}
+                        {{-- TANGGAL REAL BALIK --}}
+                        <td>
+                            {{ $tglKembali ? $tglKembali->format('d M Y') : '-' }}
+                        </td>
+
+                        {{-- STATUS --}}
                         <td>
                             @if($trans->status == 'kembali')
                                 <span class="badge bg-success">Selesai</span>
-                            @elseif(now()->gt($tglKembali))
+                            @elseif(now()->gt($deadline))
                                 <span class="badge bg-danger">Terlambat</span>
                             @else
                                 <span class="badge bg-warning text-dark">Dipinjam</span>
                             @endif
                         </td>
 
-                        {{-- ✅ DENDA --}}
+                        {{-- DENDA --}}
                         <td>
                             @if($trans->denda)
                                 <span class="badge bg-danger">
@@ -96,7 +105,7 @@
 
                     @empty
                     <tr>
-                        <td colspan="8" class="text-center py-4 text-muted">
+                        <td colspan="9" class="text-center py-4 text-muted">
                             Belum ada transaksi.
                         </td>
                     </tr>

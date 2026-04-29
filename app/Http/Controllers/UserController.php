@@ -8,15 +8,12 @@ use App\Models\Transaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Carbon\Carbon;
 
 class UserController extends Controller
 {
-    /**
-     * ================= DASHBOARD =================
-     */
     public function dashboard(Request $request)
     {
-        // 🔴 ADMIN
         if (Auth::user()->role === 'admin') {
             $users = User::count();
             $books = Book::count();
@@ -24,7 +21,6 @@ class UserController extends Controller
             return view('admin.dashboard', compact('users', 'books'));
         }
 
-        // 🟢 SISWA
         $query = Book::query();
 
         if ($request->filled('kategori')) {
@@ -61,6 +57,13 @@ class UserController extends Controller
             'user_id' => Auth::id(),
             'book_id' => $book->id,
             'tanggal_pinjam' => now(),
+
+            // ✅ DEADLINE (WAJIB ADA)
+            'tanggal_kembali' => now()->addDays(7),
+
+            // ✅ BELUM DIKEMBALIKAN
+            'tanggal_pengembalian' => null,
+
             'status' => 'pinjam',
         ]);
 
@@ -82,7 +85,9 @@ class UserController extends Controller
 
         $trans->update([
             'status' => 'kembali',
-            'tanggal_kembali' => now(),
+
+            // ✅ TANGGAL REAL BALIK
+            'tanggal_pengembalian' => Carbon::now(),
         ]);
 
         $trans->book->increment('stok');
@@ -110,17 +115,11 @@ class UserController extends Controller
         return view('admin.users.index', compact('users'));
     }
 
-    /**
-     * ================= ADMIN: CREATE =================
-     */
     public function create()
     {
         return view('admin.users.create');
     }
 
-    /**
-     * ================= ADMIN: STORE =================
-     */
     public function store(Request $request)
     {
         $request->validate([
@@ -138,26 +137,18 @@ class UserController extends Controller
             'password' => Hash::make($request->password),
             'alamat' => $request->alamat,
             'role' => 'siswa',
-            'provider' => null,
-            'provider_id' => null
         ]);
 
         return redirect()->route('admin.users.index')
             ->with('success', 'Anggota berhasil ditambahkan');
     }
 
-    /**
-     * ================= ADMIN: EDIT =================
-     */
     public function edit(string $id)
     {
         $user = User::findOrFail($id);
         return view('admin.users.edit', compact('user'));
     }
 
-    /**
-     * ================= ADMIN: UPDATE =================
-     */
     public function update(Request $request, string $id)
     {
         $user = User::findOrFail($id);
@@ -187,9 +178,6 @@ class UserController extends Controller
             ->with('success', 'Data anggota diperbarui');
     }
 
-    /**
-     * ================= ADMIN: DELETE =================
-     */
     public function destroy(string $id)
     {
         $user = User::findOrFail($id);

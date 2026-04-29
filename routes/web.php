@@ -8,17 +8,21 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\RatingController;
 use Illuminate\Support\Facades\Route;
 
-// ===============================
-// 1. HALAMAN DEPAN
-// ===============================
+/*
+|--------------------------------------------------------------------------
+| 1. HALAMAN DEPAN
+|--------------------------------------------------------------------------
+*/
 Route::get('/', function () {
     return redirect()->route('login');
 });
 
 
-// ===============================
-// 2. AUTH
-// ===============================
+/*
+|--------------------------------------------------------------------------
+| 2. AUTH
+|--------------------------------------------------------------------------
+*/
 Route::controller(AuthController::class)->group(function () {
 
     Route::get('/login', 'showLogin')->name('login');
@@ -34,10 +38,13 @@ Route::controller(AuthController::class)->group(function () {
 });
 
 
-// ===============================
-// 3. DASHBOARD GLOBAL
-// ===============================
+/*
+|--------------------------------------------------------------------------
+| 3. REDIRECT DASHBOARD
+|--------------------------------------------------------------------------
+*/
 Route::middleware(['auth'])->get('/dashboard', function () {
+
     if (auth()->user()->role === 'admin') {
         return redirect()->route('admin.dashboard');
     }
@@ -46,9 +53,11 @@ Route::middleware(['auth'])->get('/dashboard', function () {
 });
 
 
-// ===============================
-// 4. ADMIN
-// ===============================
+/*
+|--------------------------------------------------------------------------
+| 4. ADMIN
+|--------------------------------------------------------------------------
+*/
 Route::middleware(['auth', 'role:admin'])
     ->prefix('admin')
     ->name('admin.')
@@ -62,9 +71,11 @@ Route::middleware(['auth', 'role:admin'])
     });
 
 
-// ===============================
-// 5. SISWA
-// ===============================
+/*
+|--------------------------------------------------------------------------
+| 5. SISWA
+|--------------------------------------------------------------------------
+*/
 Route::middleware(['auth', 'role:siswa'])
     ->prefix('siswa')
     ->name('siswa.')
@@ -72,19 +83,46 @@ Route::middleware(['auth', 'role:siswa'])
 
         Route::get('/dashboard', [UserController::class, 'dashboard'])->name('dashboard');
 
-        // lihat detail buku
+        // 📚 DETAIL BUKU
         Route::get('/books/{id}', [BookController::class, 'show'])->name('books.show');
 
-        Route::post('/pinjam/{book_id}', [UserController::class, 'pinjamBuku'])->name('pinjam');
-        Route::post('/kembali/{transaction_id}', [UserController::class, 'kembalikanBuku'])->name('kembali');
+        /*
+        |--------------------------------------------------------------------------
+        | 🔥 TRANSAKSI SISWA (INI YANG BARU)
+        |--------------------------------------------------------------------------
+        */
 
-        Route::delete('/transaksi/{id}', [UserController::class, 'destroyTransaction'])->name('destroy');
+        // halaman pinjam (pilih tanggal)
+        Route::get('/transaksi/{book}', 
+            [TransactionController::class, 'createFromSiswa']
+        )->name('transaksi');
+
+        // simpan transaksi
+        Route::post('/transaksi', 
+            [TransactionController::class, 'storeFromSiswa']
+        )->name('transaksi.store');
+
+        Route::post('/kembali/{transaction_id}', 
+            [UserController::class, 'kembalikanBuku']
+        )->name('kembali');
+
+        /*
+        |--------------------------------------------------------------------------
+        | ❌ HAPUS TRANSAKSI
+        |--------------------------------------------------------------------------
+        */
+
+        Route::delete('/transaksi/{id}', 
+            [UserController::class, 'destroyTransaction']
+        )->name('destroy');
     });
 
 
-// ===============================
-// 6. ⭐ RATING (WAJIB ADA)
-// ===============================
+/*
+|--------------------------------------------------------------------------
+| 6. ⭐ RATING
+|--------------------------------------------------------------------------
+*/
 Route::middleware(['auth'])->group(function () {
 
     Route::post('/rating/{book}', [RatingController::class, 'store'])
