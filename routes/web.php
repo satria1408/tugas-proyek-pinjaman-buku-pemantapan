@@ -97,6 +97,11 @@ Route::middleware(['auth', 'role:siswa'])
             [TransactionController::class, 'createFromSiswa']
         )->name('transaksi');
 
+        Route::get('/success', function () {
+          return view('siswa.success');
+        })->name('success');
+
+
         // simpan transaksi
         Route::post('/transaksi', 
             [TransactionController::class, 'storeFromSiswa']
@@ -106,11 +111,6 @@ Route::middleware(['auth', 'role:siswa'])
             [UserController::class, 'kembalikanBuku']
         )->name('kembali');
 
-        /*
-        |--------------------------------------------------------------------------
-        | ❌ HAPUS TRANSAKSI
-        |--------------------------------------------------------------------------
-        */
 
         Route::delete('/transaksi/{id}', 
             [UserController::class, 'destroyTransaction']

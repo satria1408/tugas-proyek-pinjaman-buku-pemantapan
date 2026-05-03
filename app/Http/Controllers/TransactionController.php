@@ -14,6 +14,7 @@ class TransactionController extends Controller
     /**
      * ================= ADMIN =================
      */
+
     public function index()
     {
         $transactions = Transaction::with(['user', 'book'])->latest()->get();
@@ -40,7 +41,7 @@ class TransactionController extends Controller
 
         $book = Book::findOrFail($request->book_id);
 
-        if ($book->stok < 1 && $request->status == 'pinjam') {
+        if ($book->stok < 1) {
             return back()->with('error', 'Stok buku habis!');
         }
 
@@ -53,9 +54,7 @@ class TransactionController extends Controller
             'status' => 'pinjam'
         ]);
 
-        if ($request->status == 'pinjam') {
-            $book->decrement('stok');
-        }
+        $book->decrement('stok');
 
         return redirect()->route('admin.transactions.index')
             ->with('success', 'Transaksi berhasil ditambahkan');
@@ -80,8 +79,9 @@ class TransactionController extends Controller
             'tanggal_pinjam' => 'required|date'
         ]);
 
-        // pinjam → kembali
+        // PINJAM -> KEMBALI
         if ($transaction->status == 'pinjam' && $request->status == 'kembali') {
+
             $book->increment('stok');
 
             $transaction->update([
@@ -93,21 +93,22 @@ class TransactionController extends Controller
                 ->with('success', 'Buku berhasil dikembalikan');
         }
 
-        // kembali → pinjam lagi
+        // KEMBALI -> PINJAM
         if ($transaction->status == 'kembali' && $request->status == 'pinjam') {
-            if ($book->stok > 0) {
-                $book->decrement('stok');
 
-                $transaction->update([
-                    'status' => 'pinjam',
-                    'tanggal_pengembalian' => null
-                ]);
-
-                return redirect()->route('admin.transactions.index')
-                    ->with('success', 'Status diubah ke pinjam lagi');
-            } else {
+            if ($book->stok <= 0) {
                 return back()->with('error', 'Stok tidak cukup!');
             }
+
+            $book->decrement('stok');
+
+            $transaction->update([
+                'status' => 'pinjam',
+                'tanggal_pengembalian' => null
+            ]);
+
+            return redirect()->route('admin.transactions.index')
+                ->with('success', 'Status diubah ke pinjam lagi');
         }
 
         return back()->with('info', 'Tidak ada perubahan status');
@@ -127,12 +128,11 @@ class TransactionController extends Controller
             ->with('success', 'Transaksi dihapus');
     }
 
-
     /**
      * ================= SISWA =================
      */
 
-    // Halaman konfirmasi pinjam
+    // halaman konfirmasi pinjam
     public function createFromSiswa($book_id)
     {
         $book = Book::findOrFail($book_id);
@@ -145,13 +145,14 @@ class TransactionController extends Controller
         return view('siswa.transaction', compact('book'));
     }
 
-    // Simpan transaksi siswa
+    // proses pinjam siswa
     public function storeFromSiswa(Request $request)
     {
         $request->validate([
             'book_id' => 'required|exists:books,id',
             'tanggal_pinjam' => 'required|date',
-            'tanggal_kembali' => 'required|date|after:tanggal_pinjam|before_or_equal:' . Carbon::parse($request->tanggal_pinjam)->addDays(7)->toDateString(),
+            'tanggal_kembali' => 'required|date|after:tanggal_pinjam|before_or_equal:' .
+                Carbon::parse($request->tanggal_pinjam)->addDays(7)->toDateString(),
         ]);
 
         $book = Book::findOrFail($request->book_id);
@@ -171,7 +172,12 @@ class TransactionController extends Controller
 
         $book->decrement('stok');
 
-        return redirect()->route('siswa.dashboard')
-            ->with('success', 'Buku berhasil dipinjam!');
+        return redirect()->route('siswa.success');
+    }
+
+    
+    public function success()
+    {
+        return view('siswa.success');
     }
 }

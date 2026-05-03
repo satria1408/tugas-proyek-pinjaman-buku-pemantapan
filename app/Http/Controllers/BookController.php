@@ -12,16 +12,35 @@ class BookController extends Controller
     {
         $query = Book::query();
 
+        // ===============================
+        // FILTER KATEGORI
+        // ===============================
         if ($request->filled('kategori')) {
             $query->where('kategori', $request->kategori);
         }
 
+        // ===============================
+        // SEARCH (LEBIH LENGKAP)
+        // ===============================
         if ($request->filled('search')) {
-            $query->where('judul', 'like', '%' . $request->search . '%');
+            $search = $request->search;
+
+            $query->where(function ($q) use ($search) {
+                $q->where('judul', 'like', "%$search%")
+                  ->orWhere('penulis', 'like', "%$search%")
+                  ->orWhere('kategori', 'like', "%$search%")
+                  ->orWhere('deskripsi', 'like', "%$search%");
+            });
         }
 
-        $books = $query->get();
+        // ===============================
+        // DATA
+        // ===============================
+        $books = $query->latest()->get();
 
+        // ===============================
+        // KATEGORI
+        // ===============================
         $categories = Book::select('kategori')
             ->distinct()
             ->orderBy('kategori')
@@ -48,7 +67,6 @@ class BookController extends Controller
             'deskripsi' => 'nullable',
             'negara' => 'nullable|string|max:100',
             'tanggal_rilis' => 'nullable|date',
-
             'cover' => 'nullable|image|mimes:jpg,png,jpeg|max:2048'
         ]);
 
@@ -68,7 +86,6 @@ class BookController extends Controller
             'deskripsi' => $request->deskripsi,
             'negara' => $request->negara,
             'tanggal_rilis' => $request->tanggal_rilis,
-
             'cover' => $filePath
         ]);
 
@@ -102,7 +119,6 @@ class BookController extends Controller
             'deskripsi' => 'nullable',
             'negara' => 'nullable|string|max:100',
             'tanggal_rilis' => 'nullable|date',
-
             'cover' => 'nullable|image|mimes:jpg,png,jpeg|max:2048'
         ]);
 
@@ -129,7 +145,6 @@ class BookController extends Controller
             'deskripsi' => $request->deskripsi,
             'negara' => $request->negara,
             'tanggal_rilis' => $request->tanggal_rilis,
-
             'cover' => $filePath
         ]);
 

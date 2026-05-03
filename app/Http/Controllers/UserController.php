@@ -9,11 +9,14 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Carbon\Carbon;
+use App\Support\AiSmartSearchService;
+use App\Support\BookFormatter;
 
 class UserController extends Controller
 {
-    public function dashboard(Request $request)
+    public function dashboard(Request $request, AiSmartSearchService $aiService)
     {
+        // ================= ADMIN =================
         if (Auth::user()->role === 'admin') {
             $users = User::count();
             $books = Book::count();
@@ -21,6 +24,7 @@ class UserController extends Controller
             return view('admin.dashboard', compact('users', 'books'));
         }
 
+        // ================= QUERY DASAR =================
         $query = Book::query();
 
         if ($request->filled('kategori')) {
@@ -28,23 +32,54 @@ class UserController extends Controller
         }
 
         if ($request->filled('search')) {
-            $query->where('judul', 'like', '%' . $request->search . '%');
+            $search = $request->search;
+
+            $query->where(function ($q) use ($search) {
+                $q->where('judul', 'like', "%$search%")
+                  ->orWhere('penulis', 'like', "%$search%")
+                  ->orWhere('kategori', 'like', "%$search%")
+                  ->orWhere('deskripsi', 'like', "%$search%");
+            });
         }
 
-        $books = $query->get();
+        $books = $query->limit(20)->get();
 
+        // ================= 🔥 AI SMART SEARCH =================
+        $aiBooks = collect();
+
+        if ($request->filled('search') && $books->isNotEmpty()) {
+
+            // minta AI ranking
+            $aiResultText = $aiService->rankBooks($books, $request->search);
+
+            if ($aiResultText) {
+                $titles = BookFormatter::extractTitles($aiResultText);
+
+                // cocokkan ke database (pakai LIKE biar fleksibel)
+                $aiBooks = Book::where(function($q) use ($titles) {
+                    foreach ($titles as $title) {
+                        $q->orWhere('judul', 'like', "%$title%");
+                    }
+                })->get();
+            }
+        }
+
+        // ================= DATA TAMBAHAN =================
         $categories = Book::select('kategori')->distinct()->pluck('kategori');
 
         $myBooks = Transaction::with('book')
             ->where('user_id', Auth::id())
             ->get();
 
-        return view('siswa.dashboard', compact('books', 'categories', 'myBooks'));
+        return view('siswa.dashboard', compact(
+            'books',
+            'categories',
+            'myBooks',
+            'aiBooks' // 🔥 ini penting untuk blade
+        ));
     }
 
-    /**
-     * ================= PINJAM BUKU =================
-     */
+    // ================= PINJAM =================
     public function pinjamBuku($book_id)
     {
         $book = Book::findOrFail($book_id);
@@ -57,24 +92,17 @@ class UserController extends Controller
             'user_id' => Auth::id(),
             'book_id' => $book->id,
             'tanggal_pinjam' => now(),
-
-            // ✅ DEADLINE (WAJIB ADA)
             'tanggal_kembali' => now()->addDays(7),
-
-            // ✅ BELUM DIKEMBALIKAN
             'tanggal_pengembalian' => null,
-
             'status' => 'pinjam',
         ]);
 
         $book->decrement('stok');
 
-        return back()->with('success', 'Buku berhasil dipinjam');
+        return redirect()->route('siswa.success');
     }
 
-    /**
-     * ================= KEMBALIKAN =================
-     */
+    // ================= KEMBALIKAN =================
     public function kembalikanBuku($transaction_id)
     {
         $trans = Transaction::findOrFail($transaction_id);
@@ -85,8 +113,6 @@ class UserController extends Controller
 
         $trans->update([
             'status' => 'kembali',
-
-            // ✅ TANGGAL REAL BALIK
             'tanggal_pengembalian' => Carbon::now(),
         ]);
 
@@ -95,9 +121,6 @@ class UserController extends Controller
         return back()->with('success', 'Buku berhasil dikembalikan');
     }
 
-    /**
-     * ================= HAPUS TRANSAKSI =================
-     */
     public function destroyTransaction($id)
     {
         $trans = Transaction::findOrFail($id);
@@ -106,9 +129,7 @@ class UserController extends Controller
         return back()->with('success', 'Transaksi dihapus');
     }
 
-    /**
-     * ================= ADMIN: LIST USER =================
-     */
+    // ================= ADMIN USER =================
     public function index()
     {
         $users = User::latest()->get();
